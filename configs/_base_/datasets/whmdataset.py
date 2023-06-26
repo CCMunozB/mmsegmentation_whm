@@ -1,7 +1,7 @@
 # dataset settings
 dataset_type = 'WHMDataset'
 data_root = 'data'
-crop_size = (224, 224)
+crop_size = (512, 512)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadAnnotations', reduce_zero_label=True),
