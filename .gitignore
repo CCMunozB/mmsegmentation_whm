@@ -115,6 +115,7 @@ data
 *.log.json
 work_dirs/
 mmseg/.mim
+custom.ipynb
 
 # Pytorch
 *.pth

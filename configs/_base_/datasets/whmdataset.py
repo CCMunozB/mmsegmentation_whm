@@ -1,31 +1,28 @@
 # dataset settings
 dataset_type = 'WHMDataset'
 data_root = 'data'
-crop_size = (50, 224, 224)
+crop_size = (224, 224)
 train_pipeline = [
-    dict(type='LoadBiomedicalImageFromFile'),
-    dict(type='LoadBiomedicalAnnotation', reduce_zero_label=True),
-    dict(type='BioMedical3DRandomCrop', crop_size=crop_size, cat_max_ratio=0.95),
-    dict(type='BioMedical3DRandomFlip', prob=0.5),
+    dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
+    dict(type='LoadAnnotations', reduce_zero_label=True),
+    dict(type='RandomFlip', prob=0.5),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
-    dict(type='LoadBiomedicalImageFromFile'),
-    # add loading annotation after ``Resize`` because ground truth
-    # does not need to do resize data transform
-    dict(type='LoadBiomedicalAnnotation', reduce_zero_label=True),
+    dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
+    dict(type='LoadAnnotations', reduce_zero_label=True),
     dict(type='PackSegInputs')
 ]
-img_ratios = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
+
 tta_pipeline = [
-    dict(type='LoadBiomedicalImageFromFile', backend_args=None),
+    dict(type='LoadImageFromFile', backend_args=None, imdecode_backend='tifffile'),
     dict(
         type='TestTimeAug',
         transforms=[
             [
-                dict(type='BioMedical3DRandomCrop', crop_size=crop_size, cat_max_ratio=0.95),
-                dict(type='BioMedical3DRandomFlip', prob=0.5),
-            ], [dict(type='LoadBiomedicalAnnotation')], [dict(type='PackSegInputs')]
+                dict(type='RandomFlip', prob=0., direction='horizontal'),
+                dict(type='RandomFlip', prob=1., direction='horizontal')
+            ], [dict(type='LoadAnnotations')], [dict(type='PackSegInputs')]
         ])
 ]
 train_dataloader = dict(
@@ -37,7 +34,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         data_prefix=dict(
-            img_path='img_dir/train', seg_map_path='ann_dir/train'),
+            img_path='train/imgs', seg_map_path='train/label'),
         pipeline=train_pipeline))
 val_dataloader = dict(
     batch_size=1,
@@ -47,7 +44,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(img_path='img_dir/val', seg_map_path='ann_dir/val'),
+        data_prefix=dict(img_path='val/imgs', seg_map_path='val/label'),
         pipeline=test_pipeline))
 test_dataloader = val_dataloader
 

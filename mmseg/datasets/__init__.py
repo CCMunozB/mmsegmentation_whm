@@ -33,7 +33,7 @@ from .transforms import (CLAHE, AdjustGamma, BioMedical3DPad,
                          RandomRotFlip, Rerange, ResizeShortestEdge,
                          ResizeToMultiple, RGB2Gray, SegRescale)
 from .voc import PascalVOCDataset
-from .whm import WHMDataset
+from .wmh import WHMDataset
 
 # yapf: enable
 __all__ = [
