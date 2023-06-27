@@ -1,5 +1,5 @@
 # dataset settings
-dataset_type = 'WHMDataset'
+dataset_type = 'WMHDataset'
 data_root = 'data'
 crop_size = (512, 512)
 train_pipeline = [
