@@ -4,14 +4,14 @@ data_root = 'data'
 crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
-    dict(type='LoadAnnotations', reduce_zero_label=True),
+    dict(type='LoadAnnotations'),
     dict(type='RandomRotate', prob=0.5, degree=0.261799),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
-    dict(type='LoadAnnotations', reduce_zero_label=True),
+    dict(type='LoadAnnotations'),
     dict(type='PackSegInputs')
 ]
 
