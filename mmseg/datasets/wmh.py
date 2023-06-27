@@ -11,18 +11,16 @@ class WMHDataset(BaseSegDataset):
     ``seg_map_suffix`` are both fixed to '.tif'.
     """
     METAINFO = dict(
-        classes=('background', 'WHM'),
-        palette=[[255, 255, 255], [233, 0, 0]])
+        classes=('WHM'),
+        palette=[[233, 0, 0]])
 
     def __init__(self,
                  img_suffix='.tiff',
                  seg_map_suffix='.png',
-                 #reduce_zero_label=True,
-                 ignore_index: int = 255,
+                 reduce_zero_label=True,
                  **kwargs) -> None:
         super().__init__(
             img_suffix=img_suffix,
             seg_map_suffix=seg_map_suffix,
-            #reduce_zero_label=reduce_zero_label,
-            ignore_index=ignore_index,
+            reduce_zero_label=reduce_zero_label,
             **kwargs)
