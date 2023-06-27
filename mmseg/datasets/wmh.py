@@ -18,7 +18,7 @@ class WMHDataset(BaseSegDataset):
                  img_suffix='.tiff',
                  seg_map_suffix='.png',
                  reduce_zero_label=True,
-                 ignore_index=255,
+                 ignore_index=1,
                  **kwargs) -> None:
         super().__init__(
             img_suffix=img_suffix,
