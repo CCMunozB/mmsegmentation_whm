@@ -20,12 +20,12 @@ model = dict(
                      num_classes=2,
                      out_channels=2,
                      loss_decode=dict(
-                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)),
+                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, avg_non_ignore=True)),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
                         out_channels=2,
                         loss_decode=dict(
-                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4)))
+                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4, avg_non_ignore=True)))
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
