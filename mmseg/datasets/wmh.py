@@ -12,7 +12,7 @@ class WMHDataset(BaseSegDataset):
     """
     METAINFO = dict(
        classes=('WHM'),
-       palette=[233])
+       palette=[[233, 155, 155]])
 
     def __init__(self,
                  img_suffix='.tiff',
