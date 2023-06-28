@@ -18,14 +18,14 @@ model = dict(
         patch_norm=True),
     decode_head=dict(in_channels=[96, 192, 384, 768], 
                      num_classes=2,
-                     out_channels=1,
+                     out_channels=2,
                      loss_decode=dict(
-                         type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
+                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
-                        out_channels=1,
+                        out_channels=2,
                         loss_decode=dict(
-                         type='CrossEntropyLoss', use_sigmoid=True, loss_weight=0.4)))
+                         type='CrossEntropyLoss', use_sigmoid=False, loss_weight=0.4)))
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
