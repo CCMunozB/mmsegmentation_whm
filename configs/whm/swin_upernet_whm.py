@@ -16,8 +16,14 @@ model = dict(
         use_abs_pos_embed=False,
         drop_path_rate=0.3,
         patch_norm=True),
-    decode_head=dict(in_channels=[96, 192, 384, 768], num_classes=1),
-    auxiliary_head=dict(in_channels=384, num_classes=1))
+    decode_head=dict(in_channels=[96, 192, 384, 768], 
+                     num_classes=1,
+                     loss_decode=dict(
+                         type='BinaryCrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
+    auxiliary_head=dict(in_channels=384, 
+                        num_classes=1,
+                        loss_decode=dict(
+                         type='BinaryCrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)))
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
