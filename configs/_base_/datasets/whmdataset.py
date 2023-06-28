@@ -5,14 +5,14 @@ crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='Normalize', mean=[62.33,122.332,0.0], std=[72.08,175.16,1.0]),
-    dict(type='LoadAnnotations'),
+    dict(type='LoadAnnotations', imdecode_backend='tifffile'),
     dict(type='RandomRotate', prob=0.5, degree=0.261799),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
-    dict(type='LoadAnnotations'),
+    dict(type='LoadAnnotations', imdecode_backend='tifffile'),
     dict(type='PackSegInputs')
 ]
 
@@ -24,7 +24,7 @@ tta_pipeline = [
             [
                 dict(type='RandomFlip', prob=0., direction='horizontal'),
                 dict(type='RandomFlip', prob=1., direction='horizontal')
-            ], [dict(type='LoadAnnotations')], [dict(type='PackSegInputs')]
+            ], [dict(type='LoadAnnotations', imdecode_backend='tifffile')], [dict(type='PackSegInputs')]
         ])
 ]
 train_dataloader = dict(
