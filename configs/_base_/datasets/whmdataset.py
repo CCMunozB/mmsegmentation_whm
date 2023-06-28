@@ -12,7 +12,7 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
-    dict(type='LoadAnnotations', imdecode_backend='tifffile'),
+    dict(type='LoadAnnotations'),
     dict(type='PackSegInputs')
 ]
 
