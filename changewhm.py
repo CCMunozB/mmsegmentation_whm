@@ -7,12 +7,12 @@ val_label_path = "./data/val/label/"
 
 for n,val in enumerate(os.listdir(val_label_path)):
     data = tifffile.imread(val_label_path + val)
-    data[data == 1] = 255
+    data[data == 255] = 1
     tifffile.imwrite(val_label_path + val, data)
     print(n, end="\r")
 
 for n,val in enumerate(os.listdir(train_label_path)):
     data = tifffile.imread(train_label_path + val)
-    data[data == 1] = 255
+    data[data == 255] = 1
     tifffile.imwrite(train_label_path + val, data)
     print(n, end="\r")
