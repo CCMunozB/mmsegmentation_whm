@@ -17,7 +17,7 @@ class WMHDataset(BaseSegDataset):
     def __init__(self,
                  img_suffix='.tiff',
                  seg_map_suffix='.png',
-                 reduce_zero_label=True,
+                 reduce_zero_label=False,
                  **kwargs) -> None:
         super().__init__(
             img_suffix=img_suffix,
