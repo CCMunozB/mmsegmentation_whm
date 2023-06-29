@@ -21,12 +21,12 @@ model = dict(
                      num_classes=2,
                      out_channels=1,
                      loss_decode=dict(
-                         type='DiceLoss', loss_weight=1.0, ignore_index=0)),
+                         type='DiceLoss', loss_weight=1.0, ignore_index=0, reduction="none")),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
                         out_channels=1,
                         loss_decode=dict(
-                         type='DiceLoss', loss_weight=0.4, ignore_index=0)))
+                         type='DiceLoss', loss_weight=0.4, ignore_index=0, reduction="none")))
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
