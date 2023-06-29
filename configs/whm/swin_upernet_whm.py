@@ -9,6 +9,7 @@ model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
         init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
+        in_channels=2,
         embed_dims=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
