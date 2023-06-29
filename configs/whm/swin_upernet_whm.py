@@ -8,8 +8,8 @@ checkpoint_file = 'https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/s
 model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
-        #init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
-        in_channels=2,
+        init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
+        in_channels=3,
         embed_dims=96,
         depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
@@ -21,12 +21,12 @@ model = dict(
                      num_classes=2,
                      out_channels=1,
                      loss_decode=dict(
-                         type='DiceLoss', loss_weight=1.0, ignore_index=0)),
+                         type='DiceLoss', loss_weight=1.0)),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
                         out_channels=1,
                         loss_decode=dict(
-                         type='DiceLoss', loss_weight=0.4, ignore_index=0)))
+                         type='DiceLoss', loss_weight=0.4)))
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
