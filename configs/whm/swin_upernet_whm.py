@@ -8,7 +8,7 @@ checkpoint_file = 'https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/s
 model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
-        init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
+        #init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
         in_channels=2,
         embed_dims=96,
         depths=[2, 2, 6, 2],
