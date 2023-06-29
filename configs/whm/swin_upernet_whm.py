@@ -18,12 +18,12 @@ model = dict(
         drop_path_rate=0.3,
         patch_norm=True),
     decode_head=dict(in_channels=[96, 192, 384, 768], 
-                     num_classes=1,
+                     num_classes=2,
                      out_channels=1,
                      loss_decode=dict(
                          type='DiceLoss', loss_weight=1.0), ignore_index=0),
     auxiliary_head=dict(in_channels=384, 
-                        num_classes=1,
+                        num_classes=2,
                         out_channels=1,
                         loss_decode=dict(
                          type='DiceLoss', loss_weight=0.4, ignore_index=0)))
