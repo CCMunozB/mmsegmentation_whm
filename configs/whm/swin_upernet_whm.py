@@ -19,12 +19,12 @@ model = dict(
         patch_norm=True),
     decode_head=dict(in_channels=[96, 192, 384, 768], 
                      num_classes=2,
-                     out_channels=1,
+                     out_channels=2,
                      loss_decode=dict(
                          type='DiceLoss', loss_weight=1.0, reduction="mean")),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
-                        out_channels=1,
+                        out_channels=2,
                         loss_decode=dict(
                          type='DiceLoss', loss_weight=0.4, reduction="mean")))
 
@@ -56,6 +56,6 @@ param_scheduler = [
 ]
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
-train_dataloader = dict(batch_size=25)
+train_dataloader = dict(batch_size=5)
 val_dataloader = dict(batch_size=1)
 test_dataloader = val_dataloader
