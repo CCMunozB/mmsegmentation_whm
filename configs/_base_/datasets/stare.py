@@ -1,8 +1,8 @@
 # dataset settings
 dataset_type = 'STAREDataset'
-data_root = 'data/STARE'
+data_root = 'data'
 img_scale = (605, 700)
-crop_size = (128, 128)
+crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations'),

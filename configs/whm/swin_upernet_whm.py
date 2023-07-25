@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/upernet_swin.py', '../_base_/datasets/whmdataset.py',
+    '../_base_/models/upernet_swin.py', '../_base_/datasets/stare.py',
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_20k.py'
 ]
 crop_size = (224, 224)
@@ -19,14 +19,15 @@ model = dict(
         patch_norm=True),
     decode_head=dict(in_channels=[96, 192, 384, 768], 
                      num_classes=2,
-                     out_channels=2,
-                     loss_decode=dict(
-                         type='DiceLoss', loss_weight=1.0, reduction="mean")),
+                     loss_decode=[
+        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=1.0, class_weight=[0.3, 1.2]),
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.3, 1.2])]),
     auxiliary_head=dict(in_channels=384, 
                         num_classes=2,
-                        out_channels=2,
-                        loss_decode=dict(
-                         type='DiceLoss', loss_weight=0.4, reduction="mean")))
+                        loss_decode=[
+        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=0.6, class_weight=[0.3, 1.2]),
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.8, class_weight=[0.3, 1.2])])
+    )
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
 # in backbone
@@ -56,6 +57,6 @@ param_scheduler = [
 ]
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
-train_dataloader = dict(batch_size=5)
+train_dataloader = dict(batch_size=20)
 val_dataloader = dict(batch_size=1)
 test_dataloader = val_dataloader
