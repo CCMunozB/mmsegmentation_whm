@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'WMHDataset'
-data_root = 'data/WMH'
+data_root = 'data/WMH2'
 crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
