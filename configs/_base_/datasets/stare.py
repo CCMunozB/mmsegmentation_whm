@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'STAREDataset'
-data_root = 'data'
+data_root = 'data/STARE'
 img_scale = (605, 700)
 crop_size = (224, 224)
 train_pipeline = [

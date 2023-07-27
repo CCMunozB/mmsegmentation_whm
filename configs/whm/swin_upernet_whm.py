@@ -1,32 +1,44 @@
 _base_ = [
-    '../_base_/models/upernet_swin.py', '../_base_/datasets/stare.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_20k.py'
+    '../_base_/models/upernet_swin.py', '../_base_/datasets/whmdataset.py',
+    '../_base_/default_runtime.py', '../_base_/schedules/schedule_40k.py'
 ]
 crop_size = (224, 224)
 data_preprocessor = dict(size=crop_size)
-checkpoint_file = 'https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_tiny_patch4_window7_224_20220317-1cdeb081.pth'  # noqa
+checkpoint_file = 'https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_large_patch4_window7_224_22k_20220412-aeecf2aa.pth'  # noqa
 model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
         init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
         in_channels=3,
-        embed_dims=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
+        embed_dims=192,
+        depths=[2, 2, 18, 2],
+        num_heads=[6, 12, 24, 48],
         window_size=7,
         use_abs_pos_embed=False,
         drop_path_rate=0.3,
+        drop_rate=0.,
+        attn_drop_rate=0.,
         patch_norm=True),
-    decode_head=dict(in_channels=[96, 192, 384, 768], 
+    decode_head=dict(in_channels=[192, 384, 768, 1536], 
                      num_classes=2,
+                     #out_channels=1,
+                     dropout_ratio=0.3,
                      loss_decode=[
-        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=1.0, class_weight=[0.3, 1.2]),
-        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.3, 1.2])]),
-    auxiliary_head=dict(in_channels=384, 
+        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=1.0, class_weight=[0.3, 1.2]
+             ),
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.3, 1.2]
+             )
+        ]),
+    auxiliary_head=dict(in_channels=768, 
                         num_classes=2,
+                        #out_channels=1,
+                        dropout_ratio=0.3,
                         loss_decode=[
-        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=0.6, class_weight=[0.3, 1.2]),
-        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.8, class_weight=[0.3, 1.2])])
+        dict(type='CrossEntropyLoss', loss_name='loss_ce', loss_weight=0.6, class_weight=[0.3, 1.2]
+             ),
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.8, class_weight=[0.3, 1.2]
+             )
+        ])
     )
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
