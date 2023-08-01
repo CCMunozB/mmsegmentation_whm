@@ -28,8 +28,8 @@ tta_pipeline = [
         ])
 ]
 train_dataloader = dict(
-    batch_size=4,
-    num_workers=4,
+    batch_size=5,
+    num_workers=1,
     persistent_workers=True,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
@@ -44,7 +44,7 @@ train_dataloader = dict(
             pipeline=train_pipeline)))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=4,
+    num_workers=5,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(

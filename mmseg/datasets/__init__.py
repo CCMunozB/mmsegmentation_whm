@@ -34,6 +34,7 @@ from .transforms import (CLAHE, AdjustGamma, BioMedical3DPad,
                          ResizeToMultiple, RGB2Gray, SegRescale)
 from .voc import PascalVOCDataset
 from .wmh import WMHDataset
+from .wmh_multi import WMHDatasetMulti
 
 # yapf: enable
 __all__ = [
@@ -52,5 +53,5 @@ __all__ = [
     'BioMedicalGaussianNoise', 'BioMedicalGaussianBlur',
     'BioMedicalRandomGamma', 'BioMedical3DPad', 'RandomRotFlip',
     'SynapseDataset', 'REFUGEDataset', 'MapillaryDataset_v1',
-    'MapillaryDataset_v2', 'WMHDataset'
+    'MapillaryDataset_v2', 'WMHDataset', 'WMHDatasetMulti'
 ]

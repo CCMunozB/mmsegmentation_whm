@@ -107,7 +107,7 @@ class CascadeEncoderDecoder(EncoderDecoder):
             else:
                 prev_outputs = self.decode_head[i - 1].forward(
                     inputs, prev_outputs)
-            loss_decode = self.decode_head[i].loss(inputs, prev_outputs,
+            loss_decode = self.decode_head[i].loss(prev_outputs, #Change inputs to only prev_ouputs
                                                    data_samples,
                                                    self.train_cfg)
             losses.update(add_prefix(loss_decode, f'decode_{i}'))
