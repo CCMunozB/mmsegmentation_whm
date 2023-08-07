@@ -4,7 +4,8 @@ import os
 import cv2
 import nibabel as nib
 import mmcv
-
+import os.path as osp
+from mmengine.utils import mkdir_or_exist
 
 
 def center_crop_batch(images, crop_size):
@@ -93,11 +94,22 @@ def minmax(image_data):
 def do(root):
     root_path = f"{root}"
     dirs = os.listdir(root_path + "/FLAIR")
-    np.random.seed(42)
+    np.random.seed(33)
     np.random.shuffle(dirs)
     l = len(dirs)
-    train_dirs = dirs[:int(l*0.8)]
-    val_dirs = dirs[int(l*0.8):]
+    train_dirs = dirs[:int(l*0.9)]
+    val_dirs = dirs[int(l*0.9):]
+    
+    out_dir = 'data/WMH2'
+    
+    print('Making directories...')
+    mkdir_or_exist(out_dir)
+    mkdir_or_exist(osp.join(out_dir, 'imgs'))
+    mkdir_or_exist(osp.join(out_dir, 'imgs', 'train'))
+    mkdir_or_exist(osp.join(out_dir, 'imgs', 'val'))
+    mkdir_or_exist(osp.join(out_dir, 'label'))
+    mkdir_or_exist(osp.join(out_dir, 'label', 'train'))
+    mkdir_or_exist(osp.join(out_dir, 'label', 'val'))
     
     train_dims = []
     val_dims = []
@@ -150,7 +162,6 @@ def do(root):
             
             #Save labels
             slice_data = data[1][i,:, :]
-            #Dilatation
             mmcv.imwrite(slice_data, 'data/WMH2/label/val/{}.png'.format(num))
             
             index +=1
@@ -161,5 +172,5 @@ def do(root):
 
 
 if __name__=='__main__':
-    do("./data/train/imgs/")
+    do("/home/electroscian/Downloads/Datos_ROBEX")
     
