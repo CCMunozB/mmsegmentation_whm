@@ -570,26 +570,24 @@ class LoadMultiAnnotations(MMCV_LoadAnnotations):
 
         Returns:
             dict: The dict contains loaded semantic segmentation annotations.
-        """
-        assert isinstance(results['seg_map_path'], list), \
-            'segmentation map paths must be a instance of List' \
-            f'got {type(results["seg_map_path"])} instead'
-            
-        input_len = len(results['seg_map_path'])
-        
-        if input_len <= 1:
-            raise ValueError(
-                    f'Segmentation map path must have at least 2 inputs instead of {input_len}')
-            
+        """   
+              
         gt_semantic_seg_list = []
         
-        for seg_path in results['seg_map_path']:
-            img_bytes = fileio.get(
-                seg_path, backend_args=self.backend_args)
-            gt_semantic_seg = mmcv.imfrombytes(
-                img_bytes, flag='unchanged',
-                backend=self.imdecode_backend).squeeze().astype(np.uint8)
-            gt_semantic_seg_list.append(gt_semantic_seg)
+    
+        img_bytes = fileio.get(
+            results['seg_map_path'], backend_args=self.backend_args)
+        gt_semantic_seg = mmcv.imfrombytes(
+            img_bytes, flag='unchanged',
+            backend=self.imdecode_backend).squeeze().astype(np.uint8)
+        gt_semantic_seg_list.append(gt_semantic_seg)
+        
+        img_bytes = fileio.get(
+            results['seg_map_path2'], backend_args=self.backend_args)
+        gt_semantic_seg2 = mmcv.imfrombytes(
+            img_bytes, flag='unchanged',
+            backend=self.imdecode_backend).squeeze().astype(np.uint8)
+        gt_semantic_seg_list.append(gt_semantic_seg2)
 
         # reduce zero_label
         if self.reduce_zero_label is None:
@@ -617,7 +615,7 @@ class LoadMultiAnnotations(MMCV_LoadAnnotations):
             for old_id, new_id in results['label_map'].items():
                 gt_semantic_seg[gt_semantic_seg_copy == old_id] = new_id
         results['gt_seg_map'] = gt_semantic_seg_list[0]
-        results['gt_seg_map2'] = gt_semantic_seg_list[1]
+        results['gt_seg_map2'] = gt_semantic_seg_list[1]    
         results['seg_fields'].append('gt_seg_map')
         results['seg_fields'].append('gt_seg_map2')
 

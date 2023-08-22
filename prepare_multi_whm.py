@@ -109,8 +109,11 @@ def do(root):
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'train'))
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'val'))
     mkdir_or_exist(osp.join(out_dir, 'label'))
-    mkdir_or_exist(osp.join(out_dir, 'label', 'train'))
-    mkdir_or_exist(osp.join(out_dir, 'label', 'val'))
+    mkdir_or_exist(osp.join(out_dir, 'label1', 'train'))
+    mkdir_or_exist(osp.join(out_dir, 'label1', 'val'))
+    mkdir_or_exist(osp.join(out_dir, 'label2'))
+    mkdir_or_exist(osp.join(out_dir, 'label2', 'train'))
+    mkdir_or_exist(osp.join(out_dir, 'label2', 'val'))
     
     train_dims = []
     val_dims = []
@@ -131,15 +134,15 @@ def do(root):
             
             #Save images
             slice_data = data[0][i,:, :, :]
-            tifffile.imwrite('data/WMH2/imgs/train/{}.tiff'.format(num), slice_data)
+            tifffile.imwrite('{}/imgs/train/{}.tiff'.format(out_dir,num), slice_data)
             
             #Save labels
             slice_data = data[1][i,:, :]
-            mmcv.imwrite(slice_data, 'data/WMH2/label1/train/{}.png'.format(num))
+            mmcv.imwrite(slice_data, '{}/label1/train/{}.png'.format(out_dir,num))
             
             #Dilatation
             slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
-            mmcv.imwrite(slice_data, 'data/WMH2/label2/train/{}.png'.format(num))
+            mmcv.imwrite(slice_data, '{}/label2/train/{}.png'.format(out_dir,num))
             
             index +=1
             
@@ -161,15 +164,15 @@ def do(root):
             
             #Save images
             slice_data = data[0][i,:, :, :]
-            tifffile.imwrite('data/WMH2/imgs/val/{}.tiff'.format(num), slice_data)
+            tifffile.imwrite('{}/imgs/val/{}.tiff'.format(out_dir,num), slice_data)
             
             #Save labels
             slice_data = data[1][i,:, :]
-            mmcv.imwrite(slice_data, 'data/WMH2/label1/val/{}.png'.format(num))
+            mmcv.imwrite(slice_data, '{}/label1/val/{}.png'.format(out_dir,num))
             
             #Dilatation
             slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
-            mmcv.imwrite(slice_data, 'data/WMH2/label2/val/{}.png'.format(num))
+            mmcv.imwrite(slice_data, '{}/label2/val/{}.png'.format(out_dir,num))
             
             index +=1
             print(index, end="\r")
