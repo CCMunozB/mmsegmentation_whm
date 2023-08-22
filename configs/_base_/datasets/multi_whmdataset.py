@@ -5,15 +5,13 @@ crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadMultiAnnotations'),
-    dict(type='RandomRotate', prob=0.5, degree=15.0),
-    dict(type='RandomFlip', prob=0.5),
-    #dict(type='RandAugment', aug_num=2),
-    dict(type='PackSegInputs')
+    dict(type='RandomMultiRotFlip', rotate_prob=0.5, flip_prob=0.5, degree=15.0),
+    dict(type='PackMultiSegInputs')
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadMultiAnnotations'),
-    dict(type='PackSegInputs')
+    dict(type='PackMultiSegInputs')
 ]
 
 tta_pipeline = [
@@ -24,7 +22,7 @@ tta_pipeline = [
             [
                 dict(type='RandomFlip', prob=0., direction='horizontal'),
                 dict(type='RandomFlip', prob=1., direction='horizontal')
-            ], [dict(type='LoadMultiAnnotations')], [dict(type='PackSegInputs')]
+            ], [dict(type='LoadMultiAnnotations')], [dict(type='PackMultiSegInputs')]
         ])
 ]
 train_dataloader = dict(
@@ -40,7 +38,8 @@ train_dataloader = dict(
             data_root=data_root,
             data_prefix=dict(
                 img_path='imgs/train',
-                seg_map_path='label/train'),
+                seg_map_path='label1/train', # Coordinar Input-Output con labels y prediction features
+                seg_map_path2='label2/train'),
             pipeline=train_pipeline)))
 val_dataloader = dict(
     batch_size=1,
@@ -50,7 +49,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(img_path='imgs/val', seg_map_path='label/val'),
+        data_prefix=dict(img_path='imgs/val', seg_map_path='label1/val', seg_map_path2='label2/val'),
         pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
