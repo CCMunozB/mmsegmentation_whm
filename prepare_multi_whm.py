@@ -108,7 +108,7 @@ def do(root):
     mkdir_or_exist(osp.join(out_dir, 'imgs'))
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'train'))
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'val'))
-    mkdir_or_exist(osp.join(out_dir, 'label'))
+    mkdir_or_exist(osp.join(out_dir, 'label1'))
     mkdir_or_exist(osp.join(out_dir, 'label1', 'train'))
     mkdir_or_exist(osp.join(out_dir, 'label1', 'val'))
     mkdir_or_exist(osp.join(out_dir, 'label2'))

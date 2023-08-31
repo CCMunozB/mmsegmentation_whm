@@ -80,7 +80,6 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
             Default: False.
         init_cfg (dict or list[dict], optional): Initialization config dict.
     """
-    #hello
 
     def __init__(self,
                  in_channels,

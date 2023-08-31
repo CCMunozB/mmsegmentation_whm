@@ -25,7 +25,7 @@ from ..losses import accuracy
 from ..utils import resize
 
 @MODELS.register_module()
-class SegformerHead(BaseDecodeHead):
+class SegformerMultiHead(BaseDecodeHead):
     """The all mlp Head of segformer.
 
     This head is the implementation of
@@ -58,7 +58,7 @@ class SegformerHead(BaseDecodeHead):
         ##Add MultiheadAtenttion
 
         self.fusion_conv = ConvModule(
-            in_channels=self.channels * num_inputs,
+            in_channels=self.channels * 2,
             out_channels=self.channels,
             kernel_size=1,
             norm_cfg=self.norm_cfg)
@@ -89,7 +89,7 @@ class SegformerHead(BaseDecodeHead):
         
         #Test 2 conection types full merge output or half merge output
 
-        pre_out_full = self.fusion_conv(torch.cat(outs, dim=1))
+        pre_out_full = self.fusion_conv(torch.cat(outs[2:], dim=1))
         
         out = [pre_out, pre_out_full]
 
@@ -103,7 +103,7 @@ class SegformerHead(BaseDecodeHead):
             feat1 = self.dropout(feat[0])
             feat2 = self.dropout(feat[1])
         output = self.conv_seg(feat1)
-        output_full = self.conv_seg(feat2)
+        output_full = self.conv_seg2(feat2)
         return [output, output_full]
     
     def loss(self, inputs: Tuple[Tensor], batch_data_samples: SampleList,
@@ -149,11 +149,12 @@ class SegformerHead(BaseDecodeHead):
     ## data samples format?
     def _stack_batch_gt(self, batch_data_samples: SampleList) -> Tensor:
         gt_semantic_segs = [
-            data_sample.gt_sem_seg.data for data_sample in batch_data_samples
+            data_sample.gt_sem_seg.data for data_sample in batch_data_samples if data_sample.sample == 1
         ]
         gt_semantic_segs2 = [
-            data_sample.gt_sem_seg2.data for data_sample in batch_data_samples
+            data_sample.gt_sem_seg.data for data_sample in batch_data_samples if data_sample.sample == 2
         ]
+        
         stack = [torch.stack(gt_semantic_segs, dim=0), torch.stack(gt_semantic_segs2, dim=0)]
         return stack
     
@@ -172,18 +173,31 @@ class SegformerHead(BaseDecodeHead):
         """
 
         seg_label = self._stack_batch_gt(batch_data_samples)
+        #Here we have a list with both results ---> Solve for both solutions
         loss = dict()
-        seg_logits = resize(
-            input=seg_logits,
-            size=seg_label.shape[2:],
+        #seg_logits comes from forward -> two inputs, so we nedd to diferentiate to all input/output
+        seg_logits1 = resize(
+            input=seg_logits[1],
+            size=seg_label[0].shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
+        
+        #Second one is full concatenation
+        seg_logits2 = resize(
+            input=seg_logits[0],
+            size=seg_label[0].shape[2:],
+            mode='bilinear',
+            align_corners=self.align_corners)
+        #Both Outputs have the same dimensions, therefore, the reshape on the first one.
         if self.sampler is not None:
             seg_weight = self.sampler.sample(seg_logits, seg_label)
         else:
             seg_weight = None
+
             
-        seg_label = [seg.squeeze(1) for seg in seg_label]
+        #Get both segmentation labels, 0 is normal
+        seg_label1 = seg_label[0].squeeze(1)
+        seg_label2 = seg_label[1].squeeze(1)
 
         if not isinstance(self.loss_decode, nn.ModuleList):
             losses_decode = [self.loss_decode]
@@ -191,21 +205,30 @@ class SegformerHead(BaseDecodeHead):
             losses_decode = self.loss_decode
         for loss_decode in losses_decode:
             if loss_decode.loss_name not in loss:
-                loss[loss_decode.loss_name] = loss_decode(
-                    seg_logits,
-                    seg_label,
+                #Both losses are added a 50/50 proportion
+                loss[loss_decode.loss_name] = 0.5*loss_decode(
+                    seg_logits1,
+                    seg_label1,
+                    weight=seg_weight,
+                    ignore_index=self.ignore_index) + 0.5*loss_decode(
+                    seg_logits2,
+                    seg_label2,
                     weight=seg_weight,
                     ignore_index=self.ignore_index)
             else:
-                loss[loss_decode.loss_name] += loss_decode(
-                    seg_logits,
-                    seg_label,
+                loss[loss_decode.loss_name] += 0.5*loss_decode(
+                    seg_logits1,
+                    seg_label1,
+                    weight=seg_weight,
+                    ignore_index=self.ignore_index) + 0.5*loss_decode(
+                    seg_logits2,
+                    seg_label2,
                     weight=seg_weight,
                     ignore_index=self.ignore_index)
 
         #Change Accuracy ofr multi outputs
         loss['acc_seg'] = accuracy(
-            seg_logits, seg_label, ignore_index=self.ignore_index)
+            seg_logits1, seg_label1, ignore_index=self.ignore_index)
         return loss
     
     def predict_by_feat(self, seg_logits: Tensor,
@@ -222,7 +245,7 @@ class SegformerHead(BaseDecodeHead):
         """
 
         seg_logits = resize(
-            input=seg_logits,
+            input=seg_logits[0],
             size=batch_img_metas[0]['img_shape'],
             mode='bilinear',
             align_corners=self.align_corners)

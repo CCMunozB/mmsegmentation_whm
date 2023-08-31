@@ -206,7 +206,9 @@ class PackMultiSegInputs(BaseTransform):
         for key in self.meta_keys:
             if key in results:
                 img_meta[key] = results[key]
+        img_meta['sample'] = 1
         data_sample.set_metainfo(img_meta)
+        img_meta['sample'] = 2
         data_sample2.set_metainfo(img_meta)
         
         packed_results['data_samples'] = data_sample

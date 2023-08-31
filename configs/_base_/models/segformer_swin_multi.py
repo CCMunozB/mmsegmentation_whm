@@ -37,31 +37,39 @@ model = dict(
         act_cfg=dict(type='GELU'),
         norm_cfg=backbone_norm_cfg),
     decode_head=dict(
-            type='SegformerHead',
+            type='SegformerMultiHead',
             in_channels=[192, 384, 768, 1536],
             in_index=[0, 1, 2, 3],
             channels=224,
             dropout_ratio=0.3,
             num_classes=2,
-            out_channels=1,
+            out_channels=2,
             norm_cfg=norm_cfg,
             align_corners=False,
-            loss_decode=dict(
-                type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
-    auxiliary_head=dict(
-        type='FCNHead',
-        in_channels=768,
-        in_index=2,
-        channels=224,
-        num_convs=1,
-        concat_input=False,
-        dropout_ratio=0.3,
-        num_classes=2,
-        out_channels=1,
-        norm_cfg=norm_cfg,
-        align_corners=False,
-        loss_decode=dict(
-            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=0.4)),
+            loss_decode=[
+        dict(type='CrossEntropyLoss', loss_name='loss_bce', use_sigmoid=False, loss_weight=1.0, class_weight=[0.3, 1.2]
+             ),
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.3, 1.2]
+             )
+        ]),
+    # auxiliary_head=dict(
+    #     type='FCNMultiHead',
+    #     in_channels=768,
+    #     in_index=2,
+    #     channels=224,
+    #     num_convs=2,
+    #     concat_input=False,
+    #     dropout_ratio=0.3,
+    #     num_classes=2,
+    #     out_channels=2,
+    #     norm_cfg=norm_cfg,
+    #     align_corners=False,
+    #     loss_decode=[
+    #     dict(type='CrossEntropyLoss', loss_name='loss_bce', use_sigmoid=False, loss_weight=0.6, class_weight=[0.3, 1.2]
+    #          ),
+    #     dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.5, class_weight=[0.3, 1.2]
+    #          )
+    #     ]),
     # model training and testing settings
     train_cfg=dict(),
     test_cfg=dict(mode='whole'))

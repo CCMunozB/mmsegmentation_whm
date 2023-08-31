@@ -10,6 +10,7 @@ from .dpt_head import DPTHead
 from .ema_head import EMAHead
 from .enc_head import EncHead
 from .fcn_head import FCNHead
+from .fcn_multi_head import FCNMultiHead
 from .fpn_head import FPNHead
 from .gc_head import GCHead
 from .ham_head import LightHamHead
@@ -25,6 +26,7 @@ from .point_head import PointHead
 from .psa_head import PSAHead
 from .psp_head import PSPHead
 from .segformer_head import SegformerHead
+from .segformer_multi_head import SegformerMultiHead
 from .segmenter_mask_head import SegmenterMaskTransformerHead
 from .sep_aspp_head import DepthwiseSeparableASPPHead
 from .sep_fcn_head import DepthwiseSeparableFCNHead
@@ -36,10 +38,10 @@ from .uper_head import UPerHead
 __all__ = [
     'FCNHead', 'PSPHead', 'ASPPHead', 'PSAHead', 'NLHead', 'GCHead', 'CCHead',
     'UPerHead', 'DepthwiseSeparableASPPHead', 'ANNHead', 'DAHead', 'OCRHead',
-    'EncHead', 'DepthwiseSeparableFCNHead', 'FPNHead', 'EMAHead', 'DNLHead',
+    'EncHead', 'DepthwiseSeparableFCNHead', 'FPNHead', 'FCNMultiHead', 'EMAHead', 'DNLHead',
     'PointHead', 'APCHead', 'DMHead', 'LRASPPHead', 'SETRUPHead',
     'SETRMLAHead', 'DPTHead', 'SETRMLAHead', 'SegmenterMaskTransformerHead',
-    'SegformerHead', 'ISAHead', 'STDCHead', 'IterativeDecodeHead',
+    'SegformerHead', 'SegformerMultiHead', 'ISAHead', 'STDCHead', 'IterativeDecodeHead',
     'KernelUpdateHead', 'KernelUpdator', 'MaskFormerHead', 'Mask2FormerHead',
     'LightHamHead', 'PIDHead'
 ]
