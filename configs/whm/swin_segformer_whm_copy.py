@@ -1,6 +1,6 @@
 _base_ = [
-    '../_base_/models/segformer_swin.py', '../_base_/datasets/whmdataset.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_160k.py'
+    '../_base_/models/segformer_swin_copy.py', '../_base_/datasets/whmdataset.py',
+    '../_base_/default_runtime.py', '../_base_/schedules/schedule_80k.py'
 ]
 crop_size = (224, 224)
 data_preprocessor = dict(size=crop_size)
@@ -16,34 +16,33 @@ model = dict(
         window_size=7,
         use_abs_pos_embed=False,
         drop_path_rate=0.3,
-        drop_rate=0.,
+        drop_rate=0.2,
         attn_drop_rate=0.,
         patch_norm=True),
     decode_head=dict(in_channels=[192, 384, 768, 1536], 
                      num_classes=2,
                      out_channels=2,
-                     dropout_ratio=0.3,
+                     dropout_ratio=0.4,
                      loss_decode=[
-        dict(type='CrossEntropyLoss', loss_name='loss_bce', loss_weight=1.0, class_weight=[0.01, 1.0]
+        dict(type='CrossEntropyLoss', loss_name='loss_bce', loss_weight=1.0, class_weight=[0.1, 1.2]
              ),
-        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.01, 1.0]
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=3.0, class_weight=[0.1, 1.2]
              )
         ]),
-    auxiliary_head=dict(in_channels=768, 
-                        num_classes=2,
-                        out_channels=2,
-                        dropout_ratio=0.3,
-                        num_convs=3,
-                        loss_decode=[
-        dict(type='CrossEntropyLoss', 
-             loss_name='loss_bce', 
-             loss_weight=0.6, class_weight=[0.01, 1.0]
-             ),
-        dict(type='DiceLoss', 
-             loss_name='loss_dice', 
-             loss_weight=1.8, class_weight=[0.01, 1.0]
-             )
-        ])
+    # auxiliary_head=dict(in_channels=768, 
+    #                     num_classes=2,
+    #                     out_channels=2,
+    #                     dropout_ratio=0.4,
+    #                     loss_decode=[
+    #     dict(type='CrossEntropyLoss', 
+    #          loss_name='loss_bce', 
+    #          loss_weight=0.6, class_weight=[0.3, 1.2]
+    #          ),
+    #     dict(type='DiceLoss', 
+    #          loss_name='loss_dice', 
+    #          loss_weight=1.8, class_weight=[0.3, 1.2]
+    #          )
+    #     ])
     )
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
@@ -52,7 +51,7 @@ optim_wrapper = dict(
     _delete_=True,
     type='OptimWrapper',
     optimizer=dict(
-        type='AdamW', lr=0.00012, betas=(0.9, 0.999), weight_decay=0.02),
+        type='AdamW', lr=0.0005, betas=(0.9, 0.999), weight_decay=0.02),
     paramwise_cfg=dict(
         custom_keys={
             'absolute_pos_embed': dict(decay_mult=0.),
@@ -68,7 +67,7 @@ param_scheduler = [
         eta_min=0.0,
         power=1.0,
         begin=1500,
-        end=160000,
+        end=80000,
         by_epoch=False,
     )
 ]

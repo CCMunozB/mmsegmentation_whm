@@ -94,11 +94,11 @@ def minmax(image_data):
 def do(root):
     root_path = f"{root}"
     dirs = os.listdir(root_path + "/FLAIR")
-    np.random.seed(33)
+    np.random.seed(95)
     np.random.shuffle(dirs)
     l = len(dirs)
-    train_dirs = dirs[:int(l*0.9)]
-    val_dirs = dirs[int(l*0.9):]
+    train_dirs = dirs[:int(l*0.80)]
+    val_dirs = dirs[int(l*0.80):]
     
     out_dir = 'data/WMH2'
     

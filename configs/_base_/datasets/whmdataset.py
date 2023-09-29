@@ -7,7 +7,10 @@ train_pipeline = [
     dict(type='LoadAnnotations'),
     dict(type='RandomRotate', prob=0.5, degree=15.0),
     dict(type='RandomFlip', prob=0.5),
-    #dict(type='RandAugment', aug_num=2),
+    dict(type='ShearX', prob=0.6, max_mag=15.0, img_border_value=0),
+    dict(type='ShearY', prob=0.6, max_mag=15.0, img_border_value=0),
+    dict(type='TranslateX', prob=0.6, img_border_value=0),
+    dict(type='TranslateY', prob=0.6, img_border_value=0),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
@@ -22,8 +25,6 @@ tta_pipeline = [
         type='TestTimeAug',
         transforms=[
             [
-                dict(type='RandomFlip', prob=0., direction='horizontal'),
-                dict(type='RandomFlip', prob=1., direction='horizontal')
             ], [dict(type='LoadAnnotations')], [dict(type='PackSegInputs')]
         ])
 ]

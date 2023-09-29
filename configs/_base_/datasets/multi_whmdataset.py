@@ -6,6 +6,8 @@ train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadMultiAnnotations'),
     dict(type='RandomMultiRotFlip', rotate_prob=0.5, flip_prob=0.5, degree=15.0),
+    dict(type='MultiShearXY', prob=0.6, max_mag=15.0, img_border_value=0),
+    dict(type='MultiTranslateXY', prob=0.6, img_border_value=0),
     dict(type='PackMultiSegInputs')
 ]
 test_pipeline = [
@@ -19,10 +21,7 @@ tta_pipeline = [
     dict(
         type='TestTimeAug',
         transforms=[
-            [
-                dict(type='RandomFlip', prob=0., direction='horizontal'),
-                dict(type='RandomFlip', prob=1., direction='horizontal')
-            ], [dict(type='LoadMultiAnnotations')], [dict(type='PackMultiSegInputs')]
+             [dict(type='LoadMultiAnnotations')], [dict(type='PackMultiSegInputs')]
         ])
 ]
 train_dataloader = dict(
@@ -32,7 +31,7 @@ train_dataloader = dict(
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
-        times=40000,
+        times=80000,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,

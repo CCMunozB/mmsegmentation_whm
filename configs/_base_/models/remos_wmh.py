@@ -4,7 +4,7 @@ backbone_norm_cfg = dict(type='LN', requires_grad=True)
 
 checkpoint_file = 'https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_large_patch4_window7_224_22k_20220412-aeecf2aa.pth'
 data_preprocessor = dict(
-    type='SegMultiDataPreProcessor',
+    type='SegDataPreProcessor',
     #mean=[123.675, 116.28, 103.53],
     #std=[58.395, 57.12, 57.375],
     #bgr_to_rgb=True,
@@ -37,7 +37,7 @@ model = dict(
         act_cfg=dict(type='GELU'),
         norm_cfg=backbone_norm_cfg),
     decode_head=dict(
-            type='SegformerMultiHead',
+            type='RemosHead',
             in_channels=[192, 384, 768, 1536],
             in_index=[0, 1, 2, 3],
             channels=256,
@@ -47,10 +47,8 @@ model = dict(
             norm_cfg=norm_cfg,
             align_corners=False,
             loss_decode=[
-        dict(type='FocalTverskyLoss', loss_name='loss_ftl', loss_weight=1.5
-             ),
-        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.0, class_weight=[0.01, 1.2]
-             )
+        dict(type='FocalTverskyLoss', loss_name='loss_ftl', loss_weight=1.0),
+        #dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.0, class_weight=[0.01, 1.2])
         ]),
     # auxiliary_head=dict(
     #     type='FCNMultiHead',

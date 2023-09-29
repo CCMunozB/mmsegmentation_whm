@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/models/segformer_swin_multi.py', '../_base_/datasets/multi_whmdataset.py',
+    '../_base_/models/remos_wmh.py', '../_base_/datasets/whmdataset.py',
     '../_base_/default_runtime.py', '../_base_/schedules/schedule_240k.py'
 ]
 # AdamW optimizer, no weight decay for position embedding & layer norm
@@ -8,7 +8,7 @@ optim_wrapper = dict(
     _delete_=True,
     type='OptimWrapper',
     optimizer=dict(
-        type='AdamW', lr=0.00012, betas=(0.9, 0.999), weight_decay=0.02),
+        type='AdamW', lr=0.00016, betas=(0.9, 0.999), weight_decay=0.04),
     paramwise_cfg=dict(
         custom_keys={
             'absolute_pos_embed': dict(decay_mult=0.),
@@ -31,6 +31,5 @@ param_scheduler = [
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
 train_dataloader = dict(batch_size=2)
-
 val_dataloader = dict(batch_size=1)
 test_dataloader = val_dataloader

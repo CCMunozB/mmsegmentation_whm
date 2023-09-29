@@ -25,24 +25,22 @@ from ..losses import accuracy
 from ..utils import resize
 
 @MODELS.register_module()
-class SegformerMultiHead(BaseDecodeHead):
-    """The all mlp Head of segformer.
-
-    This head is the implementation of
-    `Segformer <https://arxiv.org/abs/2105.15203>` _.
-
+class RemosHead(BaseDecodeHead):
+    """
     Args:
         interpolate_mode: The interpolate mode of MLP head upsample operation.
             Default: 'bilinear'.
     """
 
-    def __init__(self, interpolate_mode='bilinear', **kwargs):
+    def __init__(self, interpolate_mode='bilinear', remos=3, remos_weight=[0.125, 0.125, 0.125, 0.625], **kwargs):
         super().__init__(input_transform='multiple_select', **kwargs)
 
         self.interpolate_mode = interpolate_mode
         num_inputs = len(self.in_channels)
 
         assert num_inputs == len(self.in_index)
+        assert remos <= (num_inputs - 1)
+        assert remos == (len(remos_weight) - 1)
 
         self.convs = nn.ModuleList()
         for i in range(num_inputs):
@@ -63,13 +61,19 @@ class SegformerMultiHead(BaseDecodeHead):
             kernel_size=1,
             norm_cfg=self.norm_cfg)
         
-        self.pre_fusion_conv = ConvModule(
-            in_channels=self.channels * 2,
-            out_channels=self.channels,
-            kernel_size=1,
-            norm_cfg=self.norm_cfg)
+        self.remos_fusion = []
+        for _ in range(remos):
+            self.remos_fusion.append(ConvModule(in_channels=self.channels,
+                out_channels=self.channels,
+                kernel_size=1,
+                norm_cfg=self.norm_cfg).cuda())
         
-        self.conv_seg2 = nn.Conv2d(self.channels, self.out_channels, kernel_size=1)
+        self.remos_conv_seg = []
+        # Dimension example for remos=3 [N/2, N/4, N/8, N]
+        for _ in range(remos):
+            self.remos_conv_seg.append(nn.Conv2d(self.channels, self.out_channels, kernel_size=1).cuda())
+            
+        self.remos_weight = remos_weight
 
     def forward(self, inputs):
         # Receive 4 stage backbone feature map: 1/4, 1/8, 1/16, 1/32
@@ -85,26 +89,36 @@ class SegformerMultiHead(BaseDecodeHead):
                     mode=self.interpolate_mode,
                     align_corners=self.align_corners))
             
-        pre_out = self.pre_fusion_conv(torch.cat(outs[:2], dim=1))
-        
-        #Test 2 conection types full merge output or half merge output
+        remos_out = []
 
+        for idx in range(len(self.remos_fusion)):
+            remos_conv = self.remos_fusion[idx](outs[idx])
+            remos_out.append(remos_conv)
+        #Test 2 conection types full merge output or half merge output
+        
         pre_out_full = self.fusion_conv(torch.cat(outs, dim=1))
         
-        out = [pre_out, pre_out_full]
+        remos_out_final = [remos_out[0], remos_out[1], remos_out[2], pre_out_full]
 
-        out = self.cls_seg(out)
+        out = self.cls_seg(remos_out_final)
 
         return out
     
     def cls_seg(self, feat):
         """Classify each pixel for all outputs."""
-        if self.dropout is not None:
-            feat1 = self.dropout(feat[0])
-            feat2 = self.dropout(feat[1])
-        output = self.conv_seg(feat1)
-        output_full = self.conv_seg2(feat2)
-        return [output, output_full]
+        if feat is not None:
+            if self.dropout is not None:
+                for idx in range(len(feat)):
+                    feat[idx]= self.dropout(feat[idx])          
+            output_full = self.conv_seg(feat[-1])
+            outputs = []
+            for idx in range(len(self.remos_conv_seg)):
+                outputs.append(self.remos_conv_seg[idx](feat[idx]))
+            outputs.append(output_full)
+        else:
+            outputs = [None, None, None, None]
+        
+        return  outputs
     
     def loss(self, inputs: Tuple[Tensor], batch_data_samples: SampleList,
              train_cfg: ConfigType) -> dict:
@@ -149,14 +163,9 @@ class SegformerMultiHead(BaseDecodeHead):
     ## data samples format?
     def _stack_batch_gt(self, batch_data_samples: SampleList) -> Tensor:
         gt_semantic_segs = [
-            data_sample.gt_sem_seg.data for data_sample in batch_data_samples if data_sample.sample == 1
+            data_sample.gt_sem_seg.data for data_sample in batch_data_samples
         ]
-        gt_semantic_segs2 = [
-            data_sample.gt_sem_seg.data for data_sample in batch_data_samples if data_sample.sample == 2
-        ]
-        
-        stack = [torch.stack(gt_semantic_segs, dim=0), torch.stack(gt_semantic_segs2, dim=0)]
-        return stack
+        return torch.stack(gt_semantic_segs, dim=0)
     
     def loss_by_feat(self, seg_logits: Tensor,
                      batch_data_samples: SampleList) -> dict:
@@ -173,31 +182,38 @@ class SegformerMultiHead(BaseDecodeHead):
         """
 
         seg_label = self._stack_batch_gt(batch_data_samples)
-        #Here we have a list with both results ---> Solve for both solutions
-        loss = dict()
-        #seg_logits comes from forward -> two inputs, so we nedd to diferentiate to all input/output
-        seg_logits1 = resize(
-            input=seg_logits[1],
-            size=seg_label[0].shape[2:],
-            mode='bilinear',
-            align_corners=self.align_corners)
         
-        #Second one is full concatenation
-        seg_logits2 = resize(
-            input=seg_logits[0],
-            size=seg_label[0].shape[2:],
-            mode='bilinear',
-            align_corners=self.align_corners)
-        #Both Outputs have the same dimensions, therefore, the reshape on the first one.
+        #To do: Add for non pool feature
+        pooling = nn.MaxPool2d(2, stride=2)
+        pool_seg = seg_label.to(torch.float64)
+        pool_seg_label = []
+        for _ in range(len(self.remos_conv_seg)):
+            pool_seg = pooling(pool_seg)
+            pool_seg_label.append(pool_seg.to(torch.uint8))
+        pool_seg_label.append(seg_label)
+        
+
+        loss = dict()
+        
+        #Pool seg label hast 4 outputs dims [N/2, N/4, N/8, N], should resize for each one.
+        seg_logits_list = []
+
+        for idx in range(len(pool_seg_label)):
+            seg_logits_list.append(resize(
+                input=seg_logits[idx],
+                size=pool_seg_label[idx].shape[2:],
+                mode='bilinear',
+                align_corners=self.align_corners))
+            
+        pool_seg_label[-1] = pool_seg_label[-1].squeeze(1)
+
+
         if self.sampler is not None:
             seg_weight = self.sampler.sample(seg_logits, seg_label)
         else:
             seg_weight = None
 
-            
-        #Get both segmentation labels, 0 is normal
-        seg_label1 = seg_label[0].squeeze(1)
-        seg_label2 = seg_label[1].squeeze(1)
+        #Last in the array is full output
 
         if not isinstance(self.loss_decode, nn.ModuleList):
             losses_decode = [self.loss_decode]
@@ -206,28 +222,12 @@ class SegformerMultiHead(BaseDecodeHead):
         for loss_decode in losses_decode:
             if loss_decode.loss_name not in loss:
                 #Both losses are added a 50/50 proportion
-                loss[loss_decode.loss_name] = 0.9*loss_decode(
-                    seg_logits1,
-                    seg_label1,
-                    weight=seg_weight,
-                    ignore_index=self.ignore_index) + 0.1*loss_decode(
-                    seg_logits2,
-                    seg_label2,
-                    weight=seg_weight,
-                    ignore_index=self.ignore_index)
+                loss[loss_decode.loss_name] = sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
             else:
-                loss[loss_decode.loss_name] += 0.9*loss_decode(
-                    seg_logits1,
-                    seg_label1,
-                    weight=seg_weight,
-                    ignore_index=self.ignore_index) + 0.1*loss_decode(
-                    seg_logits2,
-                    seg_label2,
-                    weight=seg_weight,
-                    ignore_index=self.ignore_index)
+                loss[loss_decode.loss_name] += sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
 
         #Change Accuracy ofr multi outputs
-        loss['acc_seg'] = accuracy(seg_logits1, seg_label1, ignore_index=self.ignore_index)
+        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
         return loss
     
     def predict_by_feat(self, seg_logits: Tensor,
@@ -244,7 +244,7 @@ class SegformerMultiHead(BaseDecodeHead):
         """
 
         seg_logits = resize(
-            input=seg_logits[1],
+            input=seg_logits[-1],
             size=batch_img_metas[0]['img_shape'],
             mode='bilinear',
             align_corners=self.align_corners)

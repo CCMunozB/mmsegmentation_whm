@@ -95,11 +95,11 @@ def minmax(image_data):
 def do(root):
     root_path = f"{root}"
     dirs = os.listdir(root_path + "/FLAIR")
-    np.random.seed(33)
+    np.random.seed(95)
     np.random.shuffle(dirs)
     l = len(dirs)
-    train_dirs = dirs[:int(l*0.9)]
-    val_dirs = dirs[int(l*0.9):]
+    train_dirs = dirs[:int(l*0.8)]
+    val_dirs = dirs[int(l*0.8):]
     
     out_dir = 'data/WMH_Multi'
     
@@ -182,5 +182,5 @@ def do(root):
 
 
 if __name__=='__main__':
-    do("/home/electroscian/Downloads/Datos_ROBEX")
+    do("/media/electroscian/Datos/Cristian_WMH/Datos_ROBEX")
     
