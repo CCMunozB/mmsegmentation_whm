@@ -40,34 +40,31 @@ model = dict(
             type='RemosHead',
             in_channels=[192, 384, 768, 1536],
             in_index=[0, 1, 2, 3],
-            channels=256,
-            dropout_ratio=0.3,
+            channels=224,
+            dropout_ratio=0.2,
             num_classes=2,
             out_channels=2,
             norm_cfg=norm_cfg,
             align_corners=False,
             loss_decode=[
-        dict(type='FocalTverskyLoss', loss_name='loss_ftl', loss_weight=1.0),
-        #dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.0, class_weight=[0.01, 1.2])
+        dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=0.8, class_weight=[0.001, 1.0])
         ]),
-    # auxiliary_head=dict(
-    #     type='FCNMultiHead',
-    #     in_channels=768,
-    #     in_index=2,
-    #     channels=224,
-    #     num_convs=2,
-    #     concat_input=False,
-    #     dropout_ratio=0.3,
-    #     num_classes=2,
-    #     out_channels=2,
-    #     norm_cfg=norm_cfg,
-    #     align_corners=False,
-    #     loss_decode=[
-    #     dict(type='CrossEntropyLoss', loss_name='loss_bce', use_sigmoid=False, loss_weight=0.6, class_weight=[0.3, 1.2]
-    #          ),
-    #     dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.5, class_weight=[0.3, 1.2]
-    #          )
-    #     ]),
-    # model training and testing settings
+     auxiliary_head=dict(
+         type='FCNHead',
+         in_index=2,
+         in_channels=768,
+         channels=224,
+         num_convs=2,
+         concat_input=False,
+         dropout_ratio=0.2,
+         num_classes=2,
+         out_channels=2,
+         norm_cfg=norm_cfg,
+         align_corners=False,
+         loss_decode=[
+         dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=0.2, class_weight=[0.001, 1.0])
+         ]),
+    # model training and testing settings#     in_channels=768,
+    #
     train_cfg=dict(),
     test_cfg=dict(mode='whole'))

@@ -62,15 +62,22 @@ def preprocessing_mri(images, label):
   new_label = c_label[np.min(sum_nozero):np.max(sum_nozero)+1,:,:]
   new_label[new_label != 1] = 0
   new_label = new_label.astype(np.uint8)
-
-  new_flair = minmax(new_flair)
-  new_t1 = minmax(new_t1)
+  
+  #Test minmax and z score
+  new_flair = z_score(new_flair)
+  new_t1 = z_score(new_t1)
 
 
   f_image = np.concatenate((new_flair, new_t1), 3)
   #new_img = t1t2(new_flair,new_t1,True)
   new_img = np.zeros(new_flair.shape, dtype=np.float64)
   f_image = np.concatenate((f_image, new_img), 3)
+  
+  
+#   f_image = np.concatenate((new_flair, new_flair), 3)
+#   #new_img = t1t2(new_flair,new_t1,True)
+#   new_img = np.zeros(new_flair.shape, dtype=np.float64)
+#   f_image = np.concatenate((f_image, new_flair), 3)
 
 
   return f_image, new_label
@@ -91,14 +98,44 @@ def minmax(image_data):
     normalized_data = (image_data - percentile_1) / (percentile_99 - percentile_1)
     return normalized_data
 
+def z_score(data, lth = 0.02, uth = 0.98):
+    
+    temp = np.sort(data[data>0])
+    lth_num = int(temp.shape[0]*0.02)
+    uth_num = int(temp.shape[0]*0.98)
+    data_mean = np.mean(temp[lth_num:uth_num])
+    data_std = np.std(temp[lth_num:uth_num])
+    data = (data - data_mean)/data_std
+    
+    return data
+
 def do(root):
     root_path = f"{root}"
     dirs = os.listdir(root_path + "/FLAIR")
     np.random.seed(95)
     np.random.shuffle(dirs)
     l = len(dirs)
-    train_dirs = dirs[:int(l*0.80)]
-    val_dirs = dirs[int(l*0.80):]
+    train_dirs = dirs[:int(l*0.8)]
+    test_file = dirs[int(l*0.8):]
+    l = len(test_file)
+    val_file = test_file[int(l*0.5):]
+    
+    #Select 20% for Validation & Test for each type
+    #v0 = np.random.choice(range(0,49),12, replace=False)
+    #v1 = np.random.choice(range(50,99),12, replace=False)
+    #v2 = np.random.choice(range(100,149),12, replace=False)
+    #v3 = np.random.choice(range(150,159),2, replace=False)
+    #v4 = np.random.choice(range(160,169),2, replace=False)
+    
+    #test_file = []
+    #val_file = []
+    # for vector in [v0, v1, v2]:
+        # test_file = np.concatenate((test_file,vector[int(len(vector)/2):]))
+        # val_file = np.concatenate((val_file,vector[:int(len(vector)/2)]))
+    
+    print(f"Test Files = {test_file}")
+    print(f"Val Files = {val_file}")
+    
     
     out_dir = 'data/WMH2'
     
@@ -107,14 +144,15 @@ def do(root):
     mkdir_or_exist(osp.join(out_dir, 'imgs'))
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'train'))
     mkdir_or_exist(osp.join(out_dir, 'imgs', 'val'))
+    mkdir_or_exist(osp.join(out_dir, 'imgs', 'test'))
     mkdir_or_exist(osp.join(out_dir, 'label'))
     mkdir_or_exist(osp.join(out_dir, 'label', 'train'))
     mkdir_or_exist(osp.join(out_dir, 'label', 'val'))
+    mkdir_or_exist(osp.join(out_dir, 'label', 'test'))
     
-    train_dims = []
-    val_dims = []
+    
     index = 0
-    for file in train_dirs:
+    for file in dirs:
         #Obtain data
         data_flair = nib.load(root_path + f"/FLAIR/{file}" ).get_fdata()
         data_t1 = nib.load(root_path + f"/T1/{file}" ).get_fdata()
@@ -122,55 +160,65 @@ def do(root):
         
         #Preprocessing
         data = preprocessing_mri((data_flair, data_t1), data_label)
-        train_dims.append(data[0].shape[0])
         
-        for i in range(data[0].shape[0]):
-            l_index = len(str(index))
-            num = "0"*(6-l_index) + str(index)
+        if file in val_file:
+            for i in range(data[0].shape[0]):
+                l_index = len(str(index))
+                num = "0"*(6-l_index) + str(index)
+                
+                #Save images
+                slice_data = data[0][i,:, :, :]
+                tifffile.imwrite('{}/imgs/val/{}.tiff'.format(out_dir,num), slice_data)
+                
+                #Save labels
+                slice_data = data[1][i,:, :]
+                #Dilatation
+                #slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
+                mmcv.imwrite(slice_data, '{}/label/val/{}.png'.format(out_dir,num))
+                
+                index +=1
+                print(index, end="\r")
+                
+        if file in test_file:
+            for i in range(data[0].shape[0]):
+                l_index = len(str(index))
+                num = "0"*(6-l_index) + str(index)
+                
+                #Save images
+                slice_data = data[0][i,:, :, :]
+                tifffile.imwrite('{}/imgs/test/{}.tiff'.format(out_dir,num), slice_data)
+                
+                #Save labels
+                slice_data = data[1][i,:, :]
+                #Dilatation
+                #slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
+                mmcv.imwrite(slice_data, '{}/label/test/{}.png'.format(out_dir,num))
+                
+                index +=1
+                print(index, end="\r")
+        else:
+            for i in range(data[0].shape[0]):
+                l_index = len(str(index))
+                num = "0"*(6-l_index) + str(index)
+                
+                #Save images
+                slice_data = data[0][i,:, :, :]
+                tifffile.imwrite('{}/imgs/train/{}.tiff'.format(out_dir,num), slice_data)
+                
+                #Save labels
+                slice_data = data[1][i,:, :]
+                #Dilatation
+                #slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
+                mmcv.imwrite(slice_data, '{}/label/train/{}.png'.format(out_dir,num))
+                
+                index +=1
+                print(index, end="\r")
             
-            #Save images
-            slice_data = data[0][i,:, :, :]
-            tifffile.imwrite('data/WMH2/imgs/train/{}.tiff'.format(num), slice_data)
-            
-            #Save labels
-            slice_data = data[1][i,:, :]
-            #Dilatation
-            #slice_data = scipy.ndimage.binary_dilation(slice_data).astype(np.int8)
-            mmcv.imwrite(slice_data, 'data/WMH2/label/train/{}.png'.format(num))
-            
-            index +=1
-            
-            print(index, end="\r")
-            
-    for file in val_dirs:
-        #Obtain data
-        data_flair = nib.load(root_path + f"/FLAIR/{file}" ).get_fdata()
-        data_t1 = nib.load(root_path + f"/T1/{file}" ).get_fdata()
-        data_label = nib.load(root_path + f"/WMH/{file}" ).get_fdata()
-        
-        #Preprocessing
-        data = preprocessing_mri((data_flair, data_t1), data_label)
-        val_dims.append(data[0].shape[0])
-        
-        for i in range(data[0].shape[0]):
-            l_index = len(str(index))
-            num = "0"*(6-l_index) + str(index)
-            
-            #Save images
-            slice_data = data[0][i,:, :, :]
-            tifffile.imwrite('data/WMH2/imgs/val/{}.tiff'.format(num), slice_data)
-            
-            #Save labels
-            slice_data = data[1][i,:, :]
-            mmcv.imwrite(slice_data, 'data/WMH2/label/val/{}.png'.format(num))
-            
-            index +=1
-            print(index, end="\r")
 
 
 
 
 
 if __name__=='__main__':
-    do("/home/electroscian/Downloads/Datos_ROBEX")
+    do("/media/electroscian/Datos/Cristian_WMH/Datos_ROBEX")
     
