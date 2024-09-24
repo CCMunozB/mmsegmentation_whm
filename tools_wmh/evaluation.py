@@ -5,13 +5,14 @@ import numpy as np
 import os
 import SimpleITK as sitk
 import scipy.spatial
+import sys
 
 
 
 # Set the path to the source data (e.g. the training data for self-testing)
 # and the output directory of that subject
-testDir        = 'tools_wmh/input' # For example: '/data/Utrecht/0'
-participantDir = 'tools_wmh/output' # For example: '/output/teamname/0'
+testDir        = str(sys.argv[1]) # For example: '/data/Utrecht/0'
+participantDir = str(sys.argv[2]) # For example: '/output/teamname/0'
 
 
 
@@ -19,7 +20,7 @@ def do():
     """Main function"""
     resultFilename = getResultFilename(participantDir)  
         
-    testImage, resultImage = getImages(os.path.join(testDir, 'wmh.nii.gz'), resultFilename)
+    testImage, resultImage = getImages(testDir, resultFilename)
     
     dsc = getDSC(testImage, resultImage)
     h95 = getHausdorff(testImage, resultImage)
@@ -31,6 +32,9 @@ def do():
     print('AVD',                 avd,  '%',  '(lower is better, min=0)')
     print('Lesion detection', recall,       '(higher is better, max=1)')
     print('Lesion F1',            f1,       '(higher is better, max=1)')
+    
+    data = open("tools_wmh/output/pgs_results.txt", "a")
+    data.write("{},{},{},{},{}\n".format(dsc,h95,avd, recall, f1))
     
 
 def getImages(testFilename, resultFilename):
@@ -63,27 +67,27 @@ def getResultFilename(participantDir):
     
     This should be result.nii.gz or result.nii. If these files are not present,
     it tries to find the closest filename."""
-    files = os.listdir(participantDir)
+    # files = os.listdir(participantDir)
     
-    if not files:
-        raise Exception("No results in "+ participantDir)
+    # if not files:
+    #     raise Exception("No results in "+ participantDir)
     
-    resultFilename = None
-    if 'result.nii.gz' in files:
-        resultFilename = os.path.join(participantDir, 'result.nii.gz')
-    elif 'result.nii' in files:
-        resultFilename = os.path.join(participantDir, 'result.nii')
-    else:
-        # Find the filename that is closest to 'result.nii.gz'
-        maxRatio = -1
-        for f in files:
-            currentRatio = difflib.SequenceMatcher(a = f, b = 'result.nii.gz').ratio()
+    # resultFilename = None
+    # if 'result.nii.gz' in files:
+    #     resultFilename = os.path.join(participantDir, 'result.nii.gz')
+    # elif 'result.nii' in files:
+    #     resultFilename = os.path.join(participantDir, 'result.nii')
+    # else:
+    #     # Find the filename that is closest to 'result.nii.gz'
+    #     maxRatio = -1
+    #     for f in files:
+    #         currentRatio = difflib.SequenceMatcher(a = f, b = 'result.nii.gz').ratio()
             
-            if currentRatio > maxRatio:
-                resultFilename = os.path.join(participantDir, f)
-                maxRatio = currentRatio
+    #         if currentRatio > maxRatio:
+    #             resultFilename = os.path.join(participantDir, f)
+    #             maxRatio = currentRatio
                 
-    return resultFilename
+    return participantDir
     
     
 def getDSC(testImage, resultImage):    

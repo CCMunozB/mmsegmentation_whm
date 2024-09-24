@@ -34,11 +34,12 @@ from .transforms import (CLAHE, AdjustGamma, BioMedical3DPad,
                          ResizeToMultiple, RGB2Gray, SegRescale)
 from .voc import PascalVOCDataset
 from .wmh import WMHDataset
+from .brats_2021 import BRATSdataset
 from .wmh_multi import WMHDatasetMulti
 
 # yapf: enable
 __all__ = [
-    'BaseSegDataset', 'BioMedical3DRandomCrop', 'BioMedical3DRandomFlip',
+    'BaseSegDataset', 'BRATSdataset' , 'BioMedical3DRandomCrop', 'BioMedical3DRandomFlip',
     'CityscapesDataset', 'PascalVOCDataset', 'ADE20KDataset',
     'PascalContextDataset', 'PascalContextDataset59', 'ChaseDB1Dataset',
     'DRIVEDataset', 'HRFDataset', 'STAREDataset', 'DarkZurichDataset',

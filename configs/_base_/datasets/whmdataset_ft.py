@@ -1,16 +1,17 @@
 # dataset settings
 dataset_type = 'WMHDataset'
-data_root = 'data/WMH2'
+data_root = 'data/WMH_flair'
 crop_size = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadAnnotations'),
     dict(type='RandomRotate', prob=0.5, degree=15.0, seg_pad_val=0),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='ShearX', prob=0.5, max_mag=15.0, img_border_value=0),
-    dict(type='ShearY', prob=0.5, max_mag=15.0, img_border_value=0),
+    dict(type='ShearX', prob=0.5, max_mag=20.0, img_border_value=0),
+    dict(type='ShearY', prob=0.5, max_mag=20.0, img_border_value=0),
     dict(type='TranslateX', prob=0.5, img_border_value=0),
     dict(type='TranslateY', prob=0.5, img_border_value=0),
+    #dict(type='RandomCutOut', prob=0.5, seg_fill_in=255, n_holes=(0,4), cutout_ratio=(0.01,0.03)),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
@@ -35,7 +36,7 @@ train_dataloader = dict(
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
-        times=24000,
+        times=40000,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,

@@ -10,11 +10,11 @@ data_preprocessor = dict(
     #bgr_to_rgb=True,
     size=(224, 224),
     pad_val=0,
-    seg_pad_val=255)
+    seg_pad_val=0)
 model = dict(
     type='EncoderDecoder',
     data_preprocessor=data_preprocessor,
-    pretrained=None,
+    #pretrained="work_dirs/remos_w3_try2/iter_80000.pth",
     backbone=dict(
         init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file),
         type='SwinTransformer',
@@ -41,29 +41,31 @@ model = dict(
             in_channels=[192, 384, 768, 1536],
             in_index=[0, 1, 2, 3],
             pool_scales=(1, 2, 3, 6),
-            channels=512,
-            dropout_ratio=0.2,
+            channels=224,
+            dropout_ratio=0.3,
             num_classes=2,
+            out_channels=2,
             norm_cfg=norm_cfg,
             align_corners=False,
             loss_decode=[
-        dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=1.0, class_weight=[0.00001, 1.0])
+        dict(type='LogCoshDiceLoss', loss_name='loss_log', loss_weight=1.0, #class_weight=[0.0001, 1.0]
+             ),
         ]),
     #  auxiliary_head=dict(
-    #      type='FCNHead',
-    #      in_index=2,
-    #      in_channels=768,
-    #      channels=224,
-    #      num_convs=2,
-    #      concat_input=False,
-    #      dropout_ratio=0.1,
-    #      num_classes=2,
-    #      out_channels=2,
-    #      norm_cfg=norm_cfg,
-    #      align_corners=False,
-    #      loss_decode=[
-    #      dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=0.2, class_weight=[0.00001, 1.0])
-    #      ]),
+    #         type='UPerRemosHead',
+    #         in_channels=[192, 384, 768, 1536],
+    #         in_index=[0, 1, 2, 3],
+    #         pool_scales=(1, 2, 3, 6),
+    #         channels=512,
+    #         dropout_ratio=0.3,
+    #         num_classes=2, 
+    #         out_channels=2,
+    #         norm_cfg=norm_cfg,
+    #         align_corners=False,
+    #         loss_decode=[
+    #     dict(type='LogCoshDiceLoss', loss_name='loss_log', loss_weight=1.0, #class_weight=[0.0001, 1.0]
+    #          ),
+    #     ]),
     # model training and testing settings#     in_channels=768,
     #
     train_cfg=dict(),

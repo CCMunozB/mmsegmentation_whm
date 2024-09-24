@@ -26,9 +26,9 @@ fi
 cd $SCRIPTPATH
 if [ $# -gt 3 ]
 then
-	cmd="./ROBEX $INPUT $OUTPUT1 $OUTPUT2 $4"
+	cmd="./ROBEX $INPUT $OUTPUT1 $OUTPUT2 $4 > /dev/null 2>&1"
 else
-	cmd="./ROBEX $INPUT $OUTPUT1 $OUTPUT2"
+	cmd="./ROBEX $INPUT $OUTPUT1 $OUTPUT2 > /dev/null 2>&1"
 fi
 
 eval $cmd

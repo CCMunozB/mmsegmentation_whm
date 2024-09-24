@@ -32,7 +32,7 @@ class RemosHead(BaseDecodeHead):
             Default: 'bilinear'.
     """
 
-    def __init__(self, interpolate_mode='bilinear', remos=2, remos_weight=[0.1, 0.1, 0.8], **kwargs):
+    def __init__(self, interpolate_mode='bilinear', remos=3, remos_weight=[0.25, 0.25, 0.25, 0.25], **kwargs):
         super().__init__(input_transform='multiple_select', **kwargs)
 
         self.interpolate_mode = interpolate_mode
@@ -98,7 +98,7 @@ class RemosHead(BaseDecodeHead):
         
         pre_out_full = self.fusion_conv(torch.cat(outs, dim=1))
         
-        remos_out_final = [remos_out[0], remos_out[1], pre_out_full] #################################
+        remos_out_final = [remos_out[0], remos_out[1],remos_out[2], pre_out_full] #################################
 
         out = self.cls_seg(remos_out_final)
 

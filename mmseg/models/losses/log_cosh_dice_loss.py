@@ -43,8 +43,10 @@ def binary_dice_loss(pred, target, valid_mask, smooth=1, exponent=2, **kwards):
 
     num = torch.sum(torch.mul(pred, target) * valid_mask, dim=1) * 2 + smooth
     den = torch.sum(pred.pow(exponent) + target.pow(exponent), dim=1) + smooth
+    
+    dice = 1 - num / den
 
-    return 1 - num / den
+    return torch.log((torch.exp(dice) + torch.exp(-dice))/2.0)
 
 @MODELS.register_module()
 class LogCoshDiceLoss(nn.Module):
@@ -71,9 +73,9 @@ class LogCoshDiceLoss(nn.Module):
     """
 
     def __init__(self,
-                 smooth=1,
-                 exponent=2,
-                 reduction='mean',
+                 smooth=0.0001,
+                 exponent=1,
+                 reduction='none',
                  class_weight=None,
                  loss_weight=1.0,
                  ignore_index=255,
@@ -102,6 +104,7 @@ class LogCoshDiceLoss(nn.Module):
         else:
             class_weight = None
 
+        #pred = pred.sigmoid()
         pred = F.softmax(pred, dim=1)
         num_classes = pred.shape[1]
         one_hot_target = F.one_hot(
@@ -120,9 +123,7 @@ class LogCoshDiceLoss(nn.Module):
             class_weight=class_weight,
             ignore_index=self.ignore_index)
         
-        log_cosh_loss = torch.log((torch.exp(loss) + torch.exp(-loss))/2.0)
-        
-        return log_cosh_loss
+        return loss
 
     @property
     def loss_name(self):

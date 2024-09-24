@@ -116,6 +116,8 @@ data
 *.log.json
 work_dirs/
 mmseg/.mim
+tools_wmh/
+data_preparation/
 
 # Pytorch
 *.pth

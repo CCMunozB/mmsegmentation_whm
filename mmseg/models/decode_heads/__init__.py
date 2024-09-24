@@ -36,7 +36,8 @@ from .stdc_head import STDCHead
 from .uper_head import UPerHead
 from .rmos_head import RemosHead
 from .uper_remos_head import UPerRemosHead
-
+from .uper_remos_head2 import UPerRemosHead2
+from .uper_remos_head3 import UPerRemosHead3
 __all__ = [
     'FCNHead', 'PSPHead', 'ASPPHead', 'PSAHead', 'NLHead', 'GCHead', 'CCHead',
     'UPerHead', 'DepthwiseSeparableASPPHead', 'ANNHead', 'DAHead', 'OCRHead',
@@ -45,5 +46,6 @@ __all__ = [
     'SETRMLAHead', 'DPTHead', 'SETRMLAHead', 'SegmenterMaskTransformerHead',
     'SegformerHead', 'SegformerMultiHead', 'ISAHead', 'STDCHead', 'IterativeDecodeHead',
     'KernelUpdateHead', 'KernelUpdator', 'MaskFormerHead', 'Mask2FormerHead',
-    'LightHamHead', 'PIDHead', 'RemosHead', 'UPerRemosHead'
+    'LightHamHead', 'PIDHead', 'RemosHead', 'UPerRemosHead', 'UPerRemosHead2',
+    'UPerRemosHead3'
 ]

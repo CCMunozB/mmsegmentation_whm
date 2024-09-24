@@ -29,7 +29,7 @@ class UPerRemosHead(BaseDecodeHead):
             Module applied on the last feature. Default: (1, 2, 3, 6).
     """
 
-    def __init__(self, pool_scales=(1, 2, 3, 6), remos=3, remos_weight=[0.2, 0.2, 0.2, 0.4], **kwargs):
+    def __init__(self, pool_scales=(1, 2, 3, 6), remos=3, remos_weight=[0.125, 0.125, 0.125, 0.625], **kwargs):
         super().__init__(input_transform='multiple_select', **kwargs)
         
         # PSP Module
@@ -227,7 +227,7 @@ class UPerRemosHead(BaseDecodeHead):
                 loss[loss_decode.loss_name] += sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
 
         #Change Accuracy ofr multi outputs
-        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
+        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index, topk=2)
         return loss
 
     def forward(self, inputs):
