@@ -205,8 +205,7 @@ class UPerRemosHead(BaseDecodeHead):
                 mode='bilinear',
                 align_corners=self.align_corners))
             
-        pool_seg_label[-1] = pool_seg_label[-1].squeeze(1)
-
+        pool_seg_label = [label.squeeze(1) for label in pool_seg_label]
 
         if self.sampler is not None:
             seg_weight = self.sampler.sample(seg_logits, seg_label)

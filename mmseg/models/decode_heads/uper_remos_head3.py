@@ -20,21 +20,21 @@ from ..utils import resize
 
 
 def remos_dice_loss(pred, target, smooth=0.0001, exponent=1, **kwards):
-    assert pred.shape[0] == target.shape[0]
-    
     pred = F.softmax(pred, dim=1)
     num_classes = pred.shape[1]
     target = F.one_hot(
         torch.clamp(target.long(), 0, num_classes - 1),
         num_classes=num_classes)
-        
-    pred = pred[1].reshape(pred.shape[0], -1)
-    target = target[1].reshape(target.shape[0], -1)
+    assert pred.shape[0] == target.shape[0]
+    pred = pred.reshape(pred.shape[0], -1)
+    target = target.reshape(target.shape[0], -1)
 
     num = torch.sum(torch.mul(pred, target), dim=1) * 2 + smooth
     den = torch.sum(pred.pow(exponent) + target.pow(exponent), dim=1) + smooth
+    
+    dice = 1 - num / den
 
-    return 1 - num / den
+    return dice
 
 @MODELS.register_module()
 class UPerRemosHead3(BaseDecodeHead):
@@ -48,91 +48,39 @@ class UPerRemosHead3(BaseDecodeHead):
             Module applied on the last feature. Default: (1, 2, 3, 6).
     """
 
-    def __init__(self, pool_scales=(1, 2, 3, 6), remos=3, remos_weight=[0.125, 0.125, 0.125, 0.625], **kwargs):
+    def __init__(self, remos_weight=[0.25, 0.25, 0.25, 0.25], **kwargs):
         super().__init__(input_transform='multiple_select', **kwargs)
         
-        # PSP Module
-        self.psp_modules = PPM(
-            pool_scales,
-            self.in_channels[-1],
-            self.channels,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg,
-            align_corners=self.align_corners)
-        self.bottleneck = ConvModule(
-            self.in_channels[-1] + len(pool_scales) * self.channels,
-            self.channels,
-            3,
-            padding=1,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        # FPN Module
-        self.lateral_convs = nn.ModuleList()
-        self.fpn_convs = nn.ModuleList()
-        for in_channels in self.in_channels[:-1]:  # skip the top layer
-            l_conv = ConvModule(
-                in_channels,
-                self.channels,
-                1,
-                conv_cfg=self.conv_cfg,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg,
-                inplace=False)
+
+        # Expansion Module + Segmentation
+        self.remos_convs = nn.ModuleList()
+        last_channel = 0
+        self.remos_conv_seg = []
+        for in_channels in self.in_channels[::-1]:  # skip the top layer
             fpn_conv = ConvModule(
-                self.channels,
-                self.channels,
+                int(in_channels/16 + last_channel/16),
+                int(in_channels/16),
                 3,
                 padding=1,
                 conv_cfg=self.conv_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg,
                 inplace=False)
-            self.lateral_convs.append(l_conv)
-            self.fpn_convs.append(fpn_conv)
-
-        self.fpn_bottleneck = ConvModule(
-            len(self.in_channels) * self.channels,
-            self.channels,
-            3,
-            padding=1,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        
-        
-        # self.remos_conv_inter = []
-        # # Dimension example for remos=3 [N/2, N/4, N/8, N]
-        # for _ in range(remos):
-        #     self.remos_conv_inter.append(ConvModule(self.channels, self.channels, kernel_size=3, padding=1,
-        #                                           conv_cfg=self.conv_cfg, 
-        #                                           norm_cfg=self.norm_cfg,
-        #                                           act_cfg=self.act_cfg).cuda())
-        
-        # self.remos_upsample = []
-        # # Dimension example for remos=3 [N/2, N/4, N/8, N]
-        # for _ in range(remos):
-        #     self.remos_upsample.append(ConvModule(self.channels*2, self.channels, kernel_size=3, padding=1,
-        #                                           conv_cfg=self.conv_cfg, 
-        #                                           norm_cfg=self.norm_cfg,
-        #                                           act_cfg=self.act_cfg).cuda())    
-        self.remos_conv_seg = []
-        # Dimension example for remos=3 [N/2, N/4, N/8, N]
-        for _ in range(remos):
-            self.remos_conv_seg.append(nn.Conv2d(self.channels, self.out_channels, kernel_size=1).cuda())
+            self.remos_convs.append(fpn_conv)
+            last_channel = in_channels
             
+        for i,in_channels in enumerate(self.in_channels[::-1]):  # skip the top layer
+            if i == 3:
+                self.conv_seg = nn.Conv2d(int(in_channels/16), 
+                          self.out_channels, 
+                          kernel_size=1).cuda()
+            else:
+                self.remos_conv_seg.append(
+                nn.Conv2d(int(in_channels/16), 
+                          self.out_channels, 
+                          kernel_size=1).cuda())
+                
         self.remos_weight = remos_weight
-
-    def psp_forward(self, inputs):
-        """Forward function of PSP module."""
-        x = inputs[-1]
-        psp_outs = [x]
-        psp_outs.extend(self.psp_modules(x))
-        psp_outs = torch.cat(psp_outs, dim=1)
-        output = self.bottleneck(psp_outs)
-
-        return output
 
     def _forward_feature(self, inputs):
         """Forward function for feature maps before classifying each pixel with
@@ -147,59 +95,38 @@ class UPerRemosHead3(BaseDecodeHead):
         """
         inputs = self._transform_inputs(inputs)
 
-        # build laterals
-        laterals = [
-            lateral_conv(inputs[i])
-            for i, lateral_conv in enumerate(self.lateral_convs)
-        ]
-        remos_layers = laterals.copy()
-        
-        laterals.append(self.psp_forward(inputs))     
-        #Add here layer of learning to spread from top-down path
-        # build top-down path
-        used_backbone_levels = len(laterals)
-        for i in range(used_backbone_levels - 1, 0, -1):
-            prev_shape = laterals[i - 1].shape[2:]
-            laterals[i - 1] = laterals[i - 1] + resize(
-                laterals[i],
-                size=prev_shape,
-                mode='bilinear',
-                align_corners=self.align_corners)
-            
-        # build outputs
-        fpn_outs = [
-            self.fpn_convs[i](laterals[i])
-            for i in range(used_backbone_levels - 1)
-        ]
-        # append psp feature
-        fpn_outs.append(laterals[-1])
+        resized_inputs = [
+            lat.view(-1, int(lat.shape[1]/16), int(lat.shape[2]*4), int(lat.shape[3]*4))
+            for lat in inputs
+        ][::-1]
+        up = nn.UpsamplingNearest2d(scale_factor=2)
+        remos_layer = []
+        for i, remos_conv in enumerate(self.remos_convs):
+            if i == 0:
+                res = remos_conv(resized_inputs[i])
+            else:
+                res = remos_conv(
+                    torch.concat(
+                        (up(res),resized_inputs[i]), 1)
+                    )
+            remos_layer.append(res)  
 
-        for i in range(used_backbone_levels - 1, 0, -1):
-            fpn_outs[i] = resize(
-                fpn_outs[i],
-                size=fpn_outs[0].shape[2:],
-                mode='bilinear',
-                align_corners=self.align_corners)
-                     
-        fpn_outs = torch.cat(fpn_outs, dim=1)
-        feats = self.fpn_bottleneck(fpn_outs)
-        remos_layers.append(feats)
-        return remos_layers
+        return remos_layer
     
     def cls_seg(self, feat):
         """Classify each pixel for all outputs."""
-        if feat is not None:
-            if self.dropout is not None:
-                for idx in range(len(feat)):
-                    feat[idx]= self.dropout(feat[idx])          
-            output_full = self.conv_seg(feat[-1])
-            outputs = []
-            for idx in range(len(self.remos_conv_seg)):
-                outputs.append(self.remos_conv_seg[idx](feat[idx]))
-            outputs.append(output_full)
-        else:
-            outputs = [None, None, None, None]
         
+        if self.dropout is not None:
+            for idx in range(len(feat)):
+                feat[idx]= self.dropout(feat[idx]) 
+                         
+        outputs = []
+        
+        for idx in range(len(self.remos_conv_seg)):
+            outputs.append(self.remos_conv_seg[idx](feat[idx]))
+            
+        outputs.append(self.conv_seg(feat[-1]))
+
         return  outputs
     
     def loss_by_feat(self, seg_logits: Tensor,
@@ -217,31 +144,30 @@ class UPerRemosHead3(BaseDecodeHead):
         """
 
         seg_label = self._stack_batch_gt(batch_data_samples)
-        
-        
+            
         #To do: Add for non pool feature
         pooling = nn.MaxPool2d(2, stride=2)
         pool_seg = seg_label.to(torch.float64)
-        pool_seg_label = []
+        pool_seg_label = [seg_label]
         for _ in range(len(self.remos_conv_seg)):
             pool_seg = pooling(pool_seg)
             pool_seg_label.append(pool_seg.to(torch.uint8))
-        pool_seg_label.append(seg_label)
         
+        pool_seg_label = pool_seg_label[::-1]
+
         loss = dict()
         
         #Pool seg label hast 4 outputs dims [N/2, N/4, N/8, N], should resize for each one.
         seg_logits_list = []
 
-        for idx in range(len(pool_seg_label)):
-            seg_logits_list.append(resize(
-                input=seg_logits[idx],
-                size=pool_seg_label[idx].shape[2:],
-                mode='bilinear',
-                align_corners=self.align_corners))
+        # for idx in range(len(pool_seg_label)):
+        #     seg_logits_list.append(resize(
+        #         input=seg_logits[idx],
+        #         size=pool_seg_label[idx].shape[2:],
+        #         mode='bilinear',
+        #         align_corners=self.align_corners))
             
-        pool_seg_label[-1] = pool_seg_label[-1].squeeze(1)
-
+        pool_seg_label = [label.squeeze(1) for label in pool_seg_label]
 
         if self.sampler is not None:
             seg_weight = self.sampler.sample(seg_logits, seg_label)
@@ -257,13 +183,13 @@ class UPerRemosHead3(BaseDecodeHead):
         for loss_decode in losses_decode:
             if loss_decode.loss_name not in loss:
                 #Both losses are added a 50/50 proportion
-                loss[loss_decode.loss_name] = sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
+                loss[loss_decode.loss_name] = sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits,pool_seg_label)))))
             else:
-                loss[loss_decode.loss_name] += sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
+                loss[loss_decode.loss_name] += sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits,pool_seg_label)))))
 
         #Change Accuracy ofr multi outputs
         #loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
-        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
+        loss['acc_seg'] = accuracy(seg_logits[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
         
         return loss
 

@@ -1,18 +1,23 @@
 # dataset settings
 dataset_type = 'WMHDataset'
-data_root = 'data/WMH_full'
-crop_size = (224, 224)
+data_root = 'data/WMH'
+img_scale = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadAnnotations'),
-    dict(type='RandomRotate', prob=0.5, degree=15.0, seg_pad_val=0),
-    dict(type='RandomFlip', prob=0.6, direction="horizontal"),
-    dict(type='RandomFlip', prob=0.6, direction="vertical"),
+    dict(
+        type='RandomResize',
+        scale=img_scale,
+        ratio_range=(0.9, 1.1),
+        keep_ratio=True),
+    dict(type='CenterCrop', crop_size=(224, 224)),
+    dict(type='RandomRotate', prob=0.5, degree=15.0),
+    dict(type='RandomFlip', prob=0.5, direction="horizontal"),
+    dict(type='RandomFlip', prob=0.5, direction="vertical"),
     dict(type='ShearX', prob=0.5, max_mag=10.0, img_border_value=0),
     dict(type='ShearY', prob=0.5, max_mag=10.0, img_border_value=0),
     dict(type='TranslateX', prob=0.5, img_border_value=0),
     dict(type='TranslateY', prob=0.5, img_border_value=0),
-    #dict(type='RandomCutOut', prob=0.5, seg_fill_in=255, n_holes=(0,4), cutout_ratio=(0.01,0.03)),
     dict(type='PackSegInputs')
 ]
 test_pipeline = [
@@ -36,12 +41,15 @@ train_dataloader = dict(
     persistent_workers=True,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        data_prefix=dict(
-            img_path='imgs/train',
-            seg_map_path='label/train'),
-        pipeline=train_pipeline))
+        type='RepeatDataset',
+        times=44000,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            data_prefix=dict(
+                img_path='imgs/train',
+                seg_map_path='label/train'),
+            pipeline=train_pipeline)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=4,

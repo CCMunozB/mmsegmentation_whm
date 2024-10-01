@@ -33,8 +33,8 @@ def do():
     print('Lesion detection', recall,       '(higher is better, max=1)')
     print('Lesion F1',            f1,       '(higher is better, max=1)')
     
-    data = open("tools_wmh/output/pgs_results.txt", "a")
-    data.write("{},{},{},{},{}\n".format(dsc,h95,avd, recall, f1))
+    data = open("tools_wmh/output/pgs_results_2.txt", "a")
+    data.write("{},{},{},{},{}\n".format(dsc,h95, avd, recall, f1))
     
 
 def getImages(testFilename, resultFilename):

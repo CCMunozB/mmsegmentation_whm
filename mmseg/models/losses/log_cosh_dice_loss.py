@@ -73,7 +73,7 @@ class LogCoshDiceLoss(nn.Module):
     """
 
     def __init__(self,
-                 smooth=0.0001,
+                 smooth=0.00001,
                  exponent=1,
                  reduction='none',
                  class_weight=None,
