@@ -1,0 +1,5 @@
+bash tools/dist_train.sh configs/remos/remos_v1.py 1  &
+wait; bash tools/dist_train.sh configs/remos/remos_v2.py 1 &
+wait; bash tools/dist_train.sh configs/remos/remos_v3.py 1 &
+wait; bash tools/dist_train.sh configs/remos/remos_v4.py 1 &
+wait; bash tools/dist_train.sh configs/remos/remos_v5.py 1

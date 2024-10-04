@@ -4,8 +4,10 @@ _base_ = [
 ]
 
 model = dict(
-    decode_head=dict(remos_weight=[0.1, 0.1, 0.1, 0.7]),
-    auxiliary_head=dict(remos_weight=[0.1, 0.1, 0.1, 0.7])
+    decode_head=dict(
+        remos_weight=[0.1, 0.0, 0.0, 0.9]),
+    auxiliary_head=dict(
+        remos_weight=[0.1, 0.0, 0.0, 0.9])
     )
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
