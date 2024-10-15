@@ -49,7 +49,7 @@ model = dict(
             loss_decode=[
         dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=1.0, #class_weight=[0.0001, 1.0]
              ),
-        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.5, #class_weight=[0.0001, 1.0]
+        dict(type='DiceLoss', loss_name='loss_dice', loss_weight=0.5, #class_weight=[0.0001, 1.0]
              )
         ]),
     #  auxiliary_head=dict(

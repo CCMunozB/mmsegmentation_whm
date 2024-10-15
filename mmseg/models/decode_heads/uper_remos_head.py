@@ -226,7 +226,7 @@ class UPerRemosHead(BaseDecodeHead):
                 loss[loss_decode.loss_name] += sum(list(map(torch.mul,self.remos_weight,list(map(loss_decode,seg_logits_list,pool_seg_label)))))
 
         #Change Accuracy ofr multi outputs
-        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index, topk=2)
+        loss['acc_seg'] = accuracy(seg_logits_list[-1], pool_seg_label[-1], ignore_index=self.ignore_index)
         return loss
 
     def forward(self, inputs):

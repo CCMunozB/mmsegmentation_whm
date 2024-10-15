@@ -42,32 +42,36 @@ model = dict(
             in_channels=[12*16, 24*16, 48*16, 96*16],
             in_index=[0, 1, 2, 3],
             pool_scales=(1, 2, 3, 6),
-            channels=192,
+            channels=224,
             dropout_ratio=0.3,
             num_classes=2,
             out_channels=2,
             norm_cfg=norm_cfg,
-            act_cfg=dict(type='GELU'),
             align_corners=False,
             loss_decode=[
-        dict(type='LogCoshDiceLoss', loss_name='loss_log', loss_weight=1.0),
-        # dict(type='CrossEntropyLoss', use_sigmoid=True, loss_weight=0.3, class_weight=[0.001, 1.0])
+        # dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=0.7, #class_weight=[0.0001, 1.0]
+        #      ),
+        # dict(type='DiceLoss', loss_name='loss_dice', loss_weight=1.0, class_weight=[0.1, 1.0]
+        #      ),
+        dict(type='FocalTverskyLoss', loss_name='loss_focal', loss_weight=1.0, #class_weight=[0.1, 1.0]
+             )
         ]),
-     auxiliary_head=dict(
-            type='UPerRemosHead3',
-            in_channels=[12*16, 24*16, 48*16, 96*16],
-            in_index=[0, 1, 2, 3],
-            # pool_scales=(1, 2, 3, 6),
-            channels=192,
-            dropout_ratio=0.3,
-            num_classes=2,
-            out_channels=2,
-            norm_cfg=norm_cfg,
-            act_cfg=dict(type='GELU'),
-            align_corners=False,
-            loss_decode=[
-        dict(type='LogCoshDiceLoss', loss_name='loss_log', loss_weight=0.3),
-        ]),
+    #  auxiliary_head=dict(
+    #      type='FCNHead',
+    #      in_index=2,
+    #      in_channels=768,
+    #      channels=224,
+    #      num_convs=2,
+    #      concat_input=False,
+    #      dropout_ratio=0.2,
+    #      num_classes=2,
+    #      out_channels=2,
+    #      norm_cfg=norm_cfg,
+    #      align_corners=False,
+    #      loss_decode=[
+    #      dict(type='LogCoshDiceLoss', loss_name='loss_cosh', loss_weight=0.2, #class_weight=[0.001, 1.0]
+    #           )
+    #      ]),
         
     #model training and testing settings#     in_channels=768,
     

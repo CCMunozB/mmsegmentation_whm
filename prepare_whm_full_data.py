@@ -8,7 +8,7 @@ import os.path as osp
 from mmengine.utils import mkdir_or_exist
 
 
-def insert_matrix_in_center(data, dims, ml=500, cs=100):
+def insert_matrix_in_center(data, dims, ml=500, cs=112):
     x_s, y_s, z_s = dims
     
     min_x_axis = int(ml/2-x_s/2)
@@ -56,7 +56,7 @@ def preprocessing_mri(images, label, val):
   #new_img = t1t2(new2_flair, new2_t1,True)
   #new_img = np.where(new_t1 == 0, 0, new_img)
   new_img = np.zeros(new_flair.shape, dtype=np.float64)
-  f_image = np.concatenate((f_image, new_img), 0)
+  f_image = np.concatenate((f_image, new2_flair), 0)
   
   
 #   f_image = np.concatenate((new2_flair, new2_flair), 3)
@@ -122,7 +122,7 @@ def do(root):
         # val_file = np.concatenate((val_file,vector[:int(len(vector)/2)]))
     
     
-    out_dir = 'data/WMH_200'
+    out_dir = 'data/WMH_nonan'
     
     print('Making directories...')
     mkdir_or_exist(out_dir)
@@ -148,7 +148,7 @@ def do(root):
         i_index= index
         
         if file in train_dirs:
-            data = preprocessing_mri((data_flair, data_t1), data_label, val=True)
+            data = preprocessing_mri((data_flair, data_t1), data_label, val=False)
             for i in range(data[0].shape[1]):
                 l_index = len(str(index))
                 num = "0"*(6-l_index) + str(index)

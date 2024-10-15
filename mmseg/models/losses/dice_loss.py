@@ -72,8 +72,8 @@ class DiceLoss(nn.Module):
     """
 
     def __init__(self,
-                 smooth=1,
-                 exponent=2,
+                 smooth=0.0001,
+                 exponent=1,
                  reduction='mean',
                  class_weight=None,
                  loss_weight=1.0,

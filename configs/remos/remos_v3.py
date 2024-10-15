@@ -1,13 +1,11 @@
 _base_ = [
     '../_base_/models/uper_remos_wmh2.py', '../_base_/datasets/remosdataset.py',
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_80k.py'
+    '../_base_/default_runtime.py', '../_base_/schedules/schedule_40k.py'
 ]
 
 model = dict(
     decode_head=dict(
         remos_weight=[0.2, 0.1, 0.05, 0.65]),
-    auxiliary_head=dict(
-        remos_weight=[0.2, 0.1, 0.05, 0.65])
     )
 
 # AdamW optimizer, no weight decay for position embedding & layer norm
@@ -16,10 +14,9 @@ optim_wrapper = dict(
     _delete_=True,
     type='OptimWrapper',
     optimizer=dict(
-        type='AdamW', lr=0.00003, weight_decay=0.1, betas=(0.9, 0.999)),
+        type='AdamW', lr=0.000125, weight_decay=0.1, betas=(0.9, 0.999)),
     paramwise_cfg=dict(
         custom_keys={
-            'backbone': dict(decay_mult=1.0),
             'absolute_pos_embed': dict(decay_mult=0.),
             'relative_position_bias_table': dict(decay_mult=0.),
             'norm': dict(decay_mult=0.)
@@ -27,13 +24,13 @@ optim_wrapper = dict(
 
 param_scheduler = [
     dict(
-        type='LinearLR', start_factor=1e-6, by_epoch=False, begin=0, end=6000),
+        type='LinearLR', start_factor=1e-6, by_epoch=False, begin=0, end=2000),
     dict(
         type='PolyLR',
-        eta_min=0.0,
+        eta_min=1.25e-6,
         power=0.99,
-        begin=6000,
-        end=80000,
+        begin=2000,
+        end=40000,
         by_epoch=False,
     )
 ]

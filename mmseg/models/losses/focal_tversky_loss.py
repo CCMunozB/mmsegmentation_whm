@@ -85,7 +85,7 @@ class FocalTverskyLoss(nn.Module):
     """
 
     def __init__(self,
-                 smooth=1,
+                 smooth=0.001,
                  class_weight=None,
                  loss_weight=1.0,
                  ignore_index=255,

@@ -271,7 +271,7 @@ class FocalLoss(nn.Module):
             num_classes = pred.size(1)
             if torch.cuda.is_available() and pred.is_cuda:
                 if target.dim() == 1:
-                    one_hot_target = F.one_hot(target, num_classes=num_classes)
+                    one_hot_target = F.one_hot(target.long(), num_classes=num_classes)
                 else:
                     one_hot_target = target
                     target = target.argmax(dim=1)

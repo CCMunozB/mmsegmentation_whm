@@ -1,16 +1,10 @@
 # dataset settings
 dataset_type = 'WMHDataset'
-data_root = 'data/WMH'
+data_root = 'data/WMH_nonan'
 img_scale = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
     dict(type='LoadAnnotations'),
-    dict(
-        type='RandomResize',
-        scale=img_scale,
-        ratio_range=(0.9, 1.1),
-        keep_ratio=True),
-    dict(type='CenterCrop', crop_size=(224, 224)),
     dict(type='RandomRotate', prob=0.5, degree=15.0),
     dict(type='RandomFlip', prob=0.5, direction="horizontal"),
     dict(type='RandomFlip', prob=0.5, direction="vertical"),
@@ -41,12 +35,15 @@ train_dataloader = dict(
     persistent_workers=True,
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        data_prefix=dict(
-            img_path='imgs/train',
-            seg_map_path='label/train'),
-        pipeline=train_pipeline))
+        type='RepeatDataset',
+        times=20000,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            data_prefix=dict(
+                img_path='imgs/train',
+                seg_map_path='label/train'),
+            pipeline=train_pipeline)))
 val_dataloader = dict(
     batch_size=1,
     num_workers=4,
@@ -65,7 +62,7 @@ test_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        data_prefix=dict(img_path='imgs/test', seg_map_path='label/test'),
+        data_prefix=dict(img_path='imgs/val', seg_map_path='label/val'),
         pipeline=test_pipeline))
 
 val_evaluator = dict(type='IoUMetric', iou_metrics=['mDice', 'mFscore'], prefix="dice")

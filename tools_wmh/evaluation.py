@@ -27,13 +27,13 @@ def do():
     avd = getAVD(testImage, resultImage)    
     recall, f1 = getLesionDetection(testImage, resultImage)    
     
-    print('Dice',                dsc,       '(higher is better, max=1)')
-    print('HD',                  h95, 'mm',  '(lower is better, min=0)')
-    print('AVD',                 avd,  '%',  '(lower is better, min=0)')
-    print('Lesion detection', recall,       '(higher is better, max=1)')
-    print('Lesion F1',            f1,       '(higher is better, max=1)')
+    # print('Dice',                dsc,       '(higher is better, max=1)')
+    # print('HD',                  h95, 'mm',  '(lower is better, min=0)')
+    # print('AVD',                 avd,  '%',  '(lower is better, min=0)')
+    # print('Lesion detection', recall,       '(higher is better, max=1)')
+    # print('Lesion F1',            f1,       '(higher is better, max=1)')
     
-    data = open("tools_wmh/output/pgs_results_2.txt", "a")
+    data = open("tools_wmh/output/remos_v3_results.txt", "a")
     data.write("{},{},{},{},{}\n".format(dsc,h95, avd, recall, f1))
     
 

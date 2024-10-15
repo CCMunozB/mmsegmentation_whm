@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import torch
+import SimpleITK as sitk
+import scipy.spatial
 from mmengine.dist import is_main_process
 from mmengine.evaluator import BaseMetric
 from mmengine.logging import MMLogger, print_log
@@ -119,15 +121,17 @@ class IoUMetric(BaseMetric):
         # [(A_1, B_1, C_1, D_1), ...,  (A_n, B_n, C_n, D_n)] to
         # ([A_1, ..., A_n], ..., [D_1, ..., D_n])
         results = tuple(zip(*results))
-        assert len(results) == 4
+        #assert len(results) == 4
 
         total_area_intersect = sum(results[0])
         total_area_union = sum(results[1])
         total_area_pred_label = sum(results[2])
         total_area_label = sum(results[3])
+        total_area_fp = sum(results[4])
+        total_area_fn = sum(results[5])
         ret_metrics = self.total_area_to_metrics(
             total_area_intersect, total_area_union, total_area_pred_label,
-            total_area_label, self.metrics, self.nan_to_num, self.beta)
+            total_area_label, total_area_fp, total_area_fn, self.metrics, self.nan_to_num, self.beta)
 
         class_names = self.dataset_meta['classes']
 
@@ -187,6 +191,8 @@ class IoUMetric(BaseMetric):
         label = label[mask]
 
         intersect = pred_label[pred_label == label]
+        fp = pred_label[pred_label > label]
+        fn = pred_label[pred_label < label]
         area_intersect = torch.histc(
             intersect.float(), bins=(num_classes), min=0,
             max=num_classes - 1).cpu()
@@ -196,14 +202,22 @@ class IoUMetric(BaseMetric):
         area_label = torch.histc(
             label.float(), bins=(num_classes), min=0,
             max=num_classes - 1).cpu()
+        area_fp = torch.histc(
+            fp.float(), bins=(num_classes), min=0,
+            max=num_classes - 1).cpu()
+        area_fn = torch.histc(
+            fn.float(), bins=(num_classes), min=0,
+            max=num_classes - 1).cpu()
         area_union = area_pred_label + area_label - area_intersect
-        return area_intersect, area_union, area_pred_label, area_label
+        return area_intersect, area_union, area_pred_label, area_label, area_fp, area_fn
 
     @staticmethod
     def total_area_to_metrics(total_area_intersect: np.ndarray,
                               total_area_union: np.ndarray,
                               total_area_pred_label: np.ndarray,
                               total_area_label: np.ndarray,
+                              total_area_fp: np.ndarray,
+                              total_area_fn: np.ndarray,
                               metrics: List[str] = ['mIoU'],
                               nan_to_num: Optional[int] = None,
                               beta: int = 1):
