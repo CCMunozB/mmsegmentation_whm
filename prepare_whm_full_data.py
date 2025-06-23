@@ -8,7 +8,7 @@ import os.path as osp
 from mmengine.utils import mkdir_or_exist
 
 
-def insert_matrix_in_center(data, dims, ml=500, cs=112):
+def insert_matrix_in_center(data, dims, ml=512, cs=256):
     x_s, y_s, z_s = dims
     
     min_x_axis = int(ml/2-x_s/2)
@@ -56,7 +56,7 @@ def preprocessing_mri(images, label, val):
   #new_img = t1t2(new2_flair, new2_t1,True)
   #new_img = np.where(new_t1 == 0, 0, new_img)
   new_img = np.zeros(new_flair.shape, dtype=np.float64)
-  f_image = np.concatenate((f_image, new2_flair), 0)
+  f_image = np.concatenate((f_image, new_img), 0)
   
   
 #   f_image = np.concatenate((new2_flair, new2_flair), 3)
@@ -79,19 +79,13 @@ def t1t2(a,b, truncate=False):
 def z_score(data, lth = 0.02, uth = 0.98):
     
     temp = np.sort(data[data>0])
-    lth_num = int(temp.shape[0]*0.05)
-    uth_num = int(temp.shape[0]*0.95)
+    lth_num = int(temp.shape[0]*0.02)
+    uth_num = int(temp.shape[0]*0.98)
     data_mean = np.mean(temp[lth_num:uth_num])
     data_std = np.std(temp[lth_num:uth_num])
     data = (data - data_mean)/data_std
     
     return data
-
-def minmax(image_data):
-    percentile_1 = np.min(image_data)
-    percentile_99 = np.max(image_data)
-    normalized_data = (image_data - percentile_1) / (percentile_99 - percentile_1)
-    return normalized_data
 
 def do(root):
     root_path = f"{root}"
@@ -122,7 +116,7 @@ def do(root):
         # val_file = np.concatenate((val_file,vector[:int(len(vector)/2)]))
     
     
-    out_dir = 'data/WMH_nonan'
+    out_dir = 'data/WMH'
     
     print('Making directories...')
     mkdir_or_exist(out_dir)
@@ -148,14 +142,14 @@ def do(root):
         i_index= index
         
         if file in train_dirs:
-            data = preprocessing_mri((data_flair, data_t1), data_label, val=False)
+            data = preprocessing_mri((data_flair, data_t1), data_label, val=True)
             for i in range(data[0].shape[1]):
                 l_index = len(str(index))
                 num = "0"*(6-l_index) + str(index)
                 
                 #Save images
                 slice_data = data[0][:,i, :, :]
-                slice_data = np.swapaxes(slice_data, 0, -1)
+                slice_data = np.float32(np.swapaxes(slice_data, 0, -1))
                 tifffile.imwrite('{}/imgs/train/{}.tiff'.format(out_dir,num), slice_data)
                 
                 #Save labels
@@ -175,7 +169,7 @@ def do(root):
                 
                 #Save images
                 slice_data = data[0][:,i, :, :]
-                slice_data = np.swapaxes(slice_data, 0, -1)
+                slice_data = np.float32(np.swapaxes(slice_data, 0, -1))
                 tifffile.imwrite('{}/imgs/val/{}.tiff'.format(out_dir,num), slice_data)
                 
                 #Save labels

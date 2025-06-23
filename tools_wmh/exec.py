@@ -32,57 +32,6 @@ model_name = str(sys.argv[5])
 
 #Functions
 
-#Crop from center
-# def center_crop_batch(images, crop_size):
-#     cropped_images = []
-#     extra_info_list = []
-#     images = np.transpose(images, (2, 0, 1))
-
-#     for image in images:
-#         height, width = image.shape[:2]
-#         crop_height, crop_width = crop_size
-
-#         # Calculate the starting point for the crop
-#         start_x = max(0, int((width - crop_width) / 2))
-#         start_y = max(0, int((height - crop_height) / 2))
-
-#         # Calculate the ending point for the crop
-#         end_x = min(width, start_x + crop_width)
-#         end_y = min(height, start_y + crop_height)
-
-#         # Calculate the border dimensions
-#         border_left = int(max(0, crop_width / 2 - width) / 2)
-#         border_right = int(max(0, crop_width / 2 - width) / 2)
-#         border_top = int(max(0, crop_height - height) / 2)
-#         border_bottom = int(max(0, crop_height - height) / 2)
-
-#         # Perform the center crop
-#         cropped = image[start_y:end_y, start_x:end_x]
-
-#         # Expand the border if necessary
-#         cropped = cv2.copyMakeBorder(cropped, border_top, border_bottom, border_left, border_right, cv2.BORDER_REPLICATE)
-
-#         cropped_images.append(cropped)
-
-#         # Store extra information about the original image size and crop dimensions
-#         extra_info = {
-#             'original_height': height,
-#             'original_width': width,
-#             'start_x': start_x,
-#             'start_y': start_y,
-#             'end_x': end_x,
-#             'end_y': end_y,
-#             'crop_height': crop_height,
-#             'crop_width': crop_width,
-#         }
-
-#         extra_info_list.append(extra_info)
-
-#     return np.array(cropped_images), extra_info_list
-
-
-#Adaptable preprocessing for mri images
-
 def insert_matrix_in_center(data, dims, ml=500, cs=112):
     x_s, y_s, z_s = dims
     
@@ -121,57 +70,25 @@ def preprocessing_mri(images, label=None):
   new_t1 = c_t1[np.min(sum_nozero):np.max(sum_nozero)+1,:,:]
   new_t1 = new_t1.astype(np.float64)
   new_t1 = np.expand_dims(new_t1, 3)
-
-#   new_label = c_label[np.min(sum_nozero):np.max(sum_nozero)+1,:,:]
-#   new_label[new_label != 1] = 0
-#   new_label = new_label.astype(np.uint8)
   
   #Test minmax and z score
   new2_flair = z_score(new_flair)
   new2_t1 = z_score(new_t1)
 
-
   f_image = np.concatenate((new2_flair, new2_t1), 3)
-#   new_img = t1t2(new2_flair, new2_t1,True)
-#   new_img = np.where(new_t1 == 0, 0, new_img)
   new_img = np.zeros(new_flair.shape, dtype=np.float64)
-  f_image = np.concatenate((f_image, new_img), 3)
+  f_image = np.concatenate((f_image, new2_flair), 3)
   
   extra = [(np.min(sum_nozero), np.max(sum_nozero)), info]
-  
-  
-#   f_image = np.concatenate((new2_flair, new2_flair), 3)
-#   #new_img = t1t2(new_flair,new_t1,True)
-#   new_img = np.zeros(new2_flair.shape, dtype=np.float64)
-#   f_image = np.concatenate((f_image, new2_flair), 3)
-
 
   return f_image, extra
-
-# #Create t1/t2 image
-# def t1t2(a,b, truncate=False):
-#     div = np.divide(a,b, where=b!=0)
-#     if truncate:
-#         percentile_1 = np.percentile(div, 1)
-#         percentile_99 = np.percentile(div, 99)
-#         div = np.clip(div,percentile_1,percentile_99)
-#         normalized_data = (div - percentile_1) / (percentile_99 - percentile_1)
-#         return normalized_data
-#     return div
-
-#minmax normalization
-def minmax(image_data):
-    percentile_1 = np.min(image_data)
-    percentile_99 = np.max(image_data)
-    normalized_data = (image_data - percentile_1) / (percentile_99 - percentile_1)
-    return normalized_data
 
 #Z score normalization
 def z_score(data, lth = 0.02, uth = 0.98):
     
     temp = np.sort(data[data>0])
-    lth_num = int(temp.shape[0]*0.05)
-    uth_num = int(temp.shape[0]*0.95)
+    lth_num = int(temp.shape[0]*0.02)
+    uth_num = int(temp.shape[0]*0.98)
     data_mean = np.mean(temp[lth_num:uth_num])
     data_std = np.std(temp[lth_num:uth_num])
     data = (data - data_mean)/data_std

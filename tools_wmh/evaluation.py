@@ -33,7 +33,7 @@ def do():
     # print('Lesion detection', recall,       '(higher is better, max=1)')
     # print('Lesion F1',            f1,       '(higher is better, max=1)')
     
-    data = open("tools_wmh/output/remos_v3_results.txt", "a")
+    data = open("tools_wmh/output/beit_results.txt", "a")
     data.write("{},{},{},{},{}\n".format(dsc,h95, avd, recall, f1))
     
 

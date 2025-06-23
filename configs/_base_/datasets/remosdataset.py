@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'WMHDataset'
-data_root = 'data/WMH_nonan'
+data_root = 'data/WMH'
 img_scale = (224, 224)
 train_pipeline = [
     dict(type='LoadImageFromFile', imdecode_backend='tifffile'),
@@ -36,7 +36,7 @@ train_dataloader = dict(
     sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
-        times=20000,
+        times=60000,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,

@@ -15,7 +15,7 @@ lr_config = dict(
     min_lr=0.0,
     by_epoch=False)
 train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=160000, val_interval=2000)
+    type='IterBasedTrainLoop', max_iters=160000, val_interval=1000)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 default_hooks = dict(

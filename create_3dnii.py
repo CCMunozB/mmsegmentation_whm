@@ -63,8 +63,6 @@ def recover_image(segmentation, patient):
     max_x_axis = info[1][1]
     min_y_axis = info[1][2]
     max_y_axis = info[1][3]
-    print(info)
-
 
     ml = 500
     cs = 112

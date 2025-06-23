@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import torch
-import SimpleITK as sitk
 import scipy.spatial
 from mmengine.dist import is_main_process
 from mmengine.evaluator import BaseMetric
@@ -84,8 +83,7 @@ class IoUMetric(BaseMetric):
                 label = data_sample['gt_sem_seg']['data'].squeeze().to(
                     pred_label)
                 self.results.append(
-                    self.intersect_and_union(pred_label, label, num_classes,
-                                             self.ignore_index))
+                    self.total_intersect_and_union(pred_label, label, num_classes, self.ignore_index))
             # format_result
             if self.output_dir is not None:
                 basename = osp.splitext(osp.basename(
@@ -127,11 +125,9 @@ class IoUMetric(BaseMetric):
         total_area_union = sum(results[1])
         total_area_pred_label = sum(results[2])
         total_area_label = sum(results[3])
-        total_area_fp = sum(results[4])
-        total_area_fn = sum(results[5])
         ret_metrics = self.total_area_to_metrics(
             total_area_intersect, total_area_union, total_area_pred_label,
-            total_area_label, total_area_fp, total_area_fn, self.metrics, self.nan_to_num, self.beta)
+            total_area_label, self.metrics, self.nan_to_num, self.beta)
 
         class_names = self.dataset_meta['classes']
 
@@ -185,14 +181,13 @@ class IoUMetric(BaseMetric):
             torch.Tensor: The prediction histogram on all classes.
             torch.Tensor: The ground truth histogram on all classes.
         """
-
+        
         mask = (label != ignore_index)
         pred_label = pred_label[mask]
         label = label[mask]
 
         intersect = pred_label[pred_label == label]
-        fp = pred_label[pred_label > label]
-        fn = pred_label[pred_label < label]
+
         area_intersect = torch.histc(
             intersect.float(), bins=(num_classes), min=0,
             max=num_classes - 1).cpu()
@@ -202,22 +197,57 @@ class IoUMetric(BaseMetric):
         area_label = torch.histc(
             label.float(), bins=(num_classes), min=0,
             max=num_classes - 1).cpu()
-        area_fp = torch.histc(
-            fp.float(), bins=(num_classes), min=0,
-            max=num_classes - 1).cpu()
-        area_fn = torch.histc(
-            fn.float(), bins=(num_classes), min=0,
-            max=num_classes - 1).cpu()
         area_union = area_pred_label + area_label - area_intersect
-        return area_intersect, area_union, area_pred_label, area_label, area_fp, area_fn
+        return area_intersect, area_union, area_pred_label, area_label
+    
+    @staticmethod
+    def total_intersect_and_union(self, results,
+                              gt_seg_maps,
+                              num_classes,
+                              ignore_index,
+                              label_map=dict(),
+                              reduce_zero_label=False):
+        """Calculate Total Intersection and Union.
 
+        Args:
+            results (list[ndarray] | list[str]): List of prediction segmentation
+                maps or list of prediction result filenames.
+            gt_seg_maps (list[ndarray] | list[str] | Iterables): list of ground
+                truth segmentation maps or list of label filenames.
+            num_classes (int): Number of categories.
+            ignore_index (int): Index that will be ignored in evaluation.
+            label_map (dict): Mapping old labels to new labels. Default: dict().
+            reduce_zero_label (bool): Whether ignore zero label. Default: False.
+
+        Returns:
+            ndarray: The intersection of prediction and ground truth histogram
+                on all classes.
+            ndarray: The union of prediction and ground truth histogram on all
+                classes.
+            ndarray: The prediction histogram on all classes.
+            ndarray: The ground truth histogram on all classes.
+        """
+        total_area_intersect = torch.zeros((num_classes, ), dtype=torch.float64)
+        total_area_union = torch.zeros((num_classes, ), dtype=torch.float64)
+        total_area_pred_label = torch.zeros((num_classes, ), dtype=torch.float64)
+        total_area_label = torch.zeros((num_classes, ), dtype=torch.float64)
+        for result, gt_seg_map in zip(results, gt_seg_maps):
+            area_intersect, area_union, area_pred_label, area_label = \
+                self.intersect_and_union(
+                    result, gt_seg_map, num_classes, ignore_index,
+                    label_map, reduce_zero_label)
+            total_area_intersect += area_intersect
+            total_area_union += area_union
+            total_area_pred_label += area_pred_label
+            total_area_label += area_label
+        return total_area_intersect, total_area_union, total_area_pred_label, \
+            total_area_label
+        
     @staticmethod
     def total_area_to_metrics(total_area_intersect: np.ndarray,
                               total_area_union: np.ndarray,
                               total_area_pred_label: np.ndarray,
                               total_area_label: np.ndarray,
-                              total_area_fp: np.ndarray,
-                              total_area_fn: np.ndarray,
                               metrics: List[str] = ['mIoU'],
                               nan_to_num: Optional[int] = None,
                               beta: int = 1):

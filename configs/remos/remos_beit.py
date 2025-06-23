@@ -12,7 +12,7 @@ _base_ = [
 
 
 # By default, models are trained on 8 GPUs with 2 images per GPU
-train_dataloader = dict(batch_size=24)
+train_dataloader = dict(batch_size=4)
 val_dataloader = dict(batch_size=1)
 test_dataloader = val_dataloader
 

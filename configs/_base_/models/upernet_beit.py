@@ -1,7 +1,7 @@
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 
 
-checkpoint_file = 'https://github.com/addf400/files/releases/download/v1.0/beit_base_patch16_224_pt22k_ft22k.pth'
+checkpoint_file = 'https://github.com/addf400/files/releases/download/v1.0/beit_large_patch16_224_pt22k_ft22k.pth'
 data_preprocessor = dict(
     type='SegDataPreProcessor',
     #mean=[123.675, 116.28, 103.53],
